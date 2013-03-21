@@ -29,7 +29,11 @@ resources:
    
    spellbane_enter_rsc = "The nearby psalm seems to weave the mana field together in a binding pattern."
    spellbane_leave_rsc = "As the psalm departs, the mana field begins flowing once more."
- 
+   
+   spellbane_prevented_rsc = \
+      "The notes of the song tangle with the words of your spell, unraveling "
+      "it faster than your tongue can weave it."
+      
 classvars:
 
    vrName = Spellbane_name_rsc
@@ -66,16 +70,14 @@ messages:
 
       return;
    }
-
-   % Returns false for spells with less spellpower than it
-   CalculateSongEffect(iVolume=0,modifiedVariable=0)
+   
+   TryPreventSpell(who=$, state=$, iSpellPower=0)
    {
-      % modifiedVar is spellpower. Returns TRUE if successful at blocking spell
-      if iVolume >= modifiedVariable
+      if Nth(state,2) >= iSpellPower
       {
+         Send(who,@MsgSendUser,#message=spellbane_prevented_rsc);
          return TRUE;
       }
-      
       return FALSE;
    }
 

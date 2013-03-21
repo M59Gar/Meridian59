@@ -26,6 +26,8 @@ resources:
  
    jig_enter_rsc = "The nearby ditty compels you to begin dancing with yourself."
    jig_leave_rsc = "As the ditty fades, you resume your wallflower status with a sigh of relief."
+   
+   jig_prevented_rsc = "Your urge to dance causes you to misfire completely!" 
 
 classvars:
 
@@ -78,5 +80,19 @@ messages:
       propagate;
    }
 
+   TryPreventAttack(who=$, state=$, stroke_obj=$)
+   {
+      local oWeapon;
+      oWeapon = Send(who,@GetWeapon);
+         
+      if IsClass(oWeapon,&RangedWeapon)
+         AND random(1,100) <= ((Nth(state,2)+1)/2)
+      {
+         Send(who,@MsgSendUser,#message=jig_prevented_rsc);
+         return TRUE;
+      }
+      return FALSE;
+   }
+   
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

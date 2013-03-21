@@ -40,13 +40,14 @@ properties:
       
 messages:
 
-   CalculateSongEffect(iVolume=0, modifiedVariable=0)
-   "Cuts spellpower by school."
+   ModifySpellPower(who=$,what=$,state=$,iSpellPower=0)
    {
-      % modifiedVar is spellpower
-      return (modifiedVariable - iVolume);
+      if Send(what,@GetSchool) = viHinderedSchool
+      {
+         return (iSpellPower - Nth(state,2));
+      }
+      return iSpellPower;
    }
-
 
 end
 

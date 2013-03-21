@@ -65,14 +65,10 @@ messages:
       return;
    }
 
-   CalculateSongEffect(iVolume=0,modifiedVariable=0)
-   "Reduces time passed in so that mana regens faster.  Returns reduced time."
+   ModifyManaTime(state = $, time = 1000)
+   "Reduces time passed in so that health regens faster.  Returns reduced time."
    {
-      local iTime;
-
-      iTime = (modifiedVariable * (200-iVolume)) / 200;
-
-      return iTime;
+      return bound(((time * (200 - Nth(state,2))) / 200),500,60000);
    }
 
 

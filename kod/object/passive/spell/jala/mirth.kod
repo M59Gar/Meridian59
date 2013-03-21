@@ -67,12 +67,11 @@ messages:
       return;
    }
 
-   EnterSong(who=$,iVolume=0)
+   EnterSong(who=$,iVolume=0,singer=$)
    {
       if random(1,100) < iVolume
       {
-         Send(who,@SetAction,#action=UA_HAPPY);
-         Send(who,@AddAttackModifier,#what=self);       
+         Send(who,@SetAction,#action=UA_HAPPY);    
       }
       else
       {
@@ -85,34 +84,24 @@ messages:
       
       propagate;
    }
-   
-   LeaveSong(who=$,iVolume=0)
-   {
-      Send(who,@RemoveAttackModifier,#what=self);
-      
-      propagate;
-   }
 
-   % Stuff we handle to be an attack modifier.
-
-   ModifyHitRoll(who = $,what = $,hit_roll = $)
+   ModifyHitRoll(who = $,what = $,state = $,hit_roll = $,stroke_obj = $,originalValue = 0)
    {
       % Only add hit against evil targets.
       if Send(what,@GetKarma,#detect=TRUE) < 0
       {
-         return hit_roll + 100;
+         return bound(hit_roll + Nth(state,2),originalValue,originalValue+100);
       }
-
       return hit_roll;
    }
    
-   ModifyDamage(who = $,what = $,damage = $)
+   ModifyDamage(who = $,what = $,state = $,damage = $,stroke_obj = $,originalValue = 0)
    {
       % Only add damage against evil targets.
       if Send(what,@GetKarma,#detect=TRUE) < 0
       {
          % Roughly equal to Killing Fields
-         return damage + Random(1,5);
+         return bound((damage + Random(1,((Nth(state,2)+1)/20))),originalValue,originalValue+5);
       }
 
       return damage;

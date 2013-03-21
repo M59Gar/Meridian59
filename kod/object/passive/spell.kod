@@ -71,9 +71,6 @@ resources:
       "Shal'ille frowns upon your assitance to unlawful citizens."
 
    spell_failed_by_chance = "You were unsuccessful in casting %s."
-   spell_spellbane_stopped = \
-      "The notes of the song tangle with the words of your spell, unraveling "
-      "it faster than your tongue can weave it."
 
    spell_advanced = "You advanced in %s!  Your ability is now at %s."
    spell_guardian = \
@@ -489,7 +486,7 @@ messages:
    CanCastHere(who = $, where = $, lTargets = $, iSpellPower = 0,
                bItemCast = FALSE, report = TRUE)
    {
-      local oSpell, lState, oTarget;
+      local i, oSpell, lState, oTarget;
 
       if IsClass(who,&DM)
       {
@@ -504,15 +501,11 @@ messages:
 
       if NOT bItemCast
       {
-         if Send(who,@IsAffectedByJalaModifier,#byClass=&Spellbane)
-         {            
-            if Send(who,@GetLoudestJalaModifierEffectByClass,#byClass=&Spellbane,#modifiedVariable=iSpellPower)
-               OR (IsClass(who,&Monster) AND Send(who,@CanBeSilenced))
+         % Spellbane check
+         for i in Send(who,@GetJalaModifiers)
+         {
+            if Send(Nth(i,1),@TryPreventSpell,#who=who,#state=i,#iSpellPower=iSpellPower)
             {
-               if report
-               {
-                  Send(who,@MsgSendUser,#message_rsc=spell_spellbane_stopped);
-               }
                return FALSE;
             }
          }
@@ -679,7 +672,7 @@ messages:
                bMade = FALSE)
    {
       local iLists, oUserObject, iNum, i, oOwner, oVictim, oRoom, iRand,
-            oSpell, viModified_PostCast_Time;
+            oSpell, oSongState, iModified_PostCast_Time;
       
       if NOT IsClass(who,&Player)
       {
@@ -732,14 +725,13 @@ messages:
       }
 
       % Warp Time can double or triple postcast timers
-      viModified_PostCast_Time = viPostCast_Time;     
-      
-      if Send(who,@IsAffectedByJalaModifier,#byClass=&WarpTime)
+      iModified_PostCast_Time = viPostCast_Time;
+      for i in Send(who,@GetJalaModifiers)
       {
-         viModified_PostCast_Time = Send(who,@GetLoudestJalaModifierEffectByClass,#byClass=&WarpTime,#modifiedVariable=viModified_PostCast_Time);
+         iModified_PostCast_Time= Send(Nth(i,1),@ModifyPostCastTime,#who=who,#state=i,#time=iModified_PostCast_Time,#originalValue=viPostCast_time);
       }
       
-      if NOT Send(who,@IsOkayAttackTime,#seconds=viModified_PostCast_Time)
+      if NOT Send(who,@IsOkayAttackTime,#seconds=iModified_PostCast_Time)
       {
          return FALSE;
       }
@@ -1839,7 +1831,7 @@ messages:
 
    GetTranceTime(iSpellpower=0,who=$)
    {
-      local iPercent;
+      local i, iPercent, iModifiedPercent;
       
       if iSpellpower = 0
       {
@@ -1853,9 +1845,15 @@ messages:
       }
 
       % 51% for high, 149% for low
-      iPercent = 150 - iSpellPower;   
+      iPercent = 150 - iSpellPower;
       
-      return (viCast_time*iPercent)/100;
+      iModifiedPercent = iPercent;
+      for i in Send(who,@GetJalaModifiers)
+      {
+         iModifiedPercent = Send(Nth(i,1),@ModifyTranceTime,#who=who,#state=i,#percent=iModifiedPercent,#originalValue=iPercent);
+      }
+      
+      return (viCast_time*iModifiedPercent)/100;
    }
 
    DoPreTranceEffects(who=$,lTargets=$,iSpellpower=$)
@@ -2178,36 +2176,10 @@ messages:
          iSpellpower = iSpellpower - iAbilityLoss;
       }
 
-      % Check for hinder songs
-      if Send(who,@IsAffectedByJalaModifier,#byClass=&Civility) AND viSchool = SS_FAREN
+      % Check for Jala power changes
+      for i in Send(who,@GetJalaModifiers)
       {
-         iSpellPower = Send(who,@GetLoudestJalaModifierEffectByClass,#byClass=&Civility,#modifiedVariable=iSpellPower);
-      }
-      if Send(who,@IsAffectedByJalaModifier,#byClass=&Conciliation) AND viSchool = SS_KRAANAN
-      {
-         iSpellPower = Send(who,@GetLoudestJalaModifierEffectByClass,#byClass=&Conciliation,#modifiedVariable=iSpellPower);
-      }
-      if Send(who,@IsAffectedByJalaModifier,#byClass=&Disharmony) AND viSchool = SS_JALA
-      {
-         iSpellPower = Send(who,@GetLoudestJalaModifierEffectByClass,#byClass=&Disharmony,#modifiedVariable=iSpellPower);
-      }
-      if Send(who,@IsAffectedByJalaModifier,#byClass=&ProfaneResonance) AND viSchool = SS_SHALILLE
-      {
-         iSpellPower = Send(who,@GetLoudestJalaModifierEffectByClass,#byClass=&ProfaneResonance,#modifiedVariable=iSpellPower);
-      }
-      if Send(who,@IsAffectedByJalaModifier,#byClass=&SacredResonance) AND viSchool = SS_QOR
-      {
-         iSpellPower = Send(who,@GetLoudestJalaModifierEffectByClass,#byClass=&SacredResonance,#modifiedVariable=iSpellPower);
-      }
-      if Send(who,@IsAffectedByJalaModifier,#byClass=&Truth) AND viSchool = SS_RIIJA
-      {
-         iSpellPower = Send(who,@GetLoudestJalaModifierEffectByClass,#byClass=&Truth,#modifiedVariable=iSpellPower);
-      }
-
-      % Check for Mana Convergence
-      if Send(who,@IsAffectedByJalaModifier,#byClass=&ManaConvergence)
-      {
-         iSpellPower = Send(who,@GetLoudestJalaModifierEffectByClass,#byClass=&ManaConvergence,#modifiedVariable=iSpellPower);
+         iSpellPower = Send(Nth(i,1),@ModifySpellPower,#who=who,#what=self,#state=i,#iSpellPower=iSpellPower);
       }
       
       % Bound the lower end so that the stuff that follows is truly a bonus.

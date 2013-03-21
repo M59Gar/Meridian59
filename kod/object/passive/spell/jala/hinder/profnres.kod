@@ -44,8 +44,6 @@ classvars:
    viSchool = SS_JALA
    viSpell_level = 3
 
-   viHarmful = TRUE
-
    viHinderedSchool = SS_SHALILLE
 
 properties:

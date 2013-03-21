@@ -61,11 +61,9 @@ messages:
       return;
    }
 
-   % Boosts spellpower by up to 75
-   CalculateSongEffect(iVolume=0,modifiedVariable=0)
+   ModifySpellPower(who=$,what=$,state=$,iSpellPower=0)
    {
-      % modifiedVar is iSpellPower
-      return (modifiedVariable + ((iVolume/2)+25));
+      return (iSpellPower + ((Nth(state,2)/2)+25));
    }
 
 end

@@ -25,6 +25,8 @@ resources:
 
    warptime_enter_rsc = "A woozy feeling passes through your head as time slows to a crawl."
    warptime_leave_rsc = "A rushing sensation passes through your head as time speeds back up."
+   
+   warptime_slowed_rsc = "Your actions seem to happen in slow motion."
  
 classvars:
 
@@ -59,19 +61,60 @@ messages:
 
       return;
    }
-
-   % Slows time, up to triple delays
-   CalculateSongEffect(iVolume=0,modifiedVariable=1)
+   
+   ModifyAttackTime(who=$,state=$,time=1,originalValue=1)
    {
-      local iDelayRatio;
-      
-      iDelayRatio = 1;
-      iDelayRatio = iVolume/33;
-      iDelayRatio = bound(iDelayRatio,2,3);
+      if time > (originalValue * 3)
+      {
+         return time;
+      }
 
-      return (modifiedVariable*iDelayRatio);
+      if time = originalValue
+      {
+         Send(who,@MsgSendUser,#message=warptime_slowed_rsc);
+      }
+
+      time = ((time * Nth(state,2))/33);
+      time = bound(time, originalValue, originalValue*3);
+
+      return time;
    }
 
+   ModifyPostCastTime(who=$,state=$,time=1,originalValue=1)
+   {
+      if time > (originalValue * 3)
+      {
+         return time;
+      }
 
+      if time = originalValue
+      {
+         Send(who,@MsgSendUser,#message=warptime_slowed_rsc);
+      }
+
+      time = ((time * Nth(state,2))/33);
+      time = bound(time, originalValue, originalValue*3);
+
+      return time;
+   }
+
+   ModifyTranceTime(who=$,state=$,percent=100,iSpellPower=0,originalValue=100)
+   {
+      if percent > (originalValue * 3)
+      {
+         return percent;
+      }
+
+      percent = ((percent * Nth(state,2))/33);
+      percent = bound(percent, originalValue, originalValue*3);
+
+      return percent;
+   }
+
+   % Offer up to 2 damage reduction based on spellpower due to slowed attacks
+   ModifyDefenseDamage(who = $,what = $,state = $,damage = $,atype = $,aspell = $,stroke_obj = $,originalValue = 0)
+   {
+      return bound((damage-((Nth(state,2)+1)/50)),originalValue-2,originalValue);
+   }
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

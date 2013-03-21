@@ -11,6 +11,19 @@
 Jala is Spell
 
 % Jala Spells are radius spells that last as long as the player remains in a trance.
+%
+% Mechanically, there is a state here of the form [time elapsed, players enchanted, volume, range].
+% This should not be altered. It is used to track the radius and who should be affected.
+% Volume and Range have their own Calculate functions if they need to be modified.
+%
+% EnterSong and LeaveSong add or remove from a player's plJala_modifiers list.
+% Jala modifiers are states of the form [song object, volume, singer].
+% These states should be used when effects are actually being performed.
+%
+% Useful Jala functions to call (these are in Player.kod):
+% IsAffectedByJalaModifier(what=$,byClass=&Jala) -- returns TRUE or FALSE
+% GetLoudestJalaModifierState(byClass=&Jala)     -- returns [song object, volume, singer] with highest volume
+% GetJalaModifiers()                             -- returns player's list of [song object, volume, singer]
 
 constants:
 
@@ -145,7 +158,7 @@ messages:
                if viAffectsOthers
                   OR (NOT viAffectsOthers AND oUser=who)
                {
-                  send(self,@EnterSong,#who=oUser,#iVolume=iVolume);
+                  send(self,@EnterSong,#who=oUser,#iVolume=iVolume,#singer=who);
                   lEnchanted = cons(oUser,lEnchanted);
                }
             }
@@ -162,19 +175,19 @@ messages:
       propagate;
    }
 
-   EnterSong(who=$,iVolume=0)
+   EnterSong(who=$,iVolume=0,singer=$)
    {      
       local i,each_obj;
       
-      Send(who,@AddJalaModifier,#what=self,#iVolume=iVolume);
+      Send(who,@AddJalaModifier,#what=self,#iVolume=iVolume,#singer=who);
       Send(who,@MsgSendUser,#message_rsc=jala_song_enter);
 
       return;
    }
    
-   LeaveSong(who=$,iVolume=0)
+   LeaveSong(who=$,iVolume=0,singer=$)
    {      
-      Send(who,@RemoveJalaModifier,#what=self,#iVolume=iVolume);
+      Send(who,@RemoveJalaModifier,#what=self,#iVolume=iVolume,#singer=who);
       Send(who,@MsgSendUser,#message_rsc=jala_song_leave);
       
       return;
@@ -199,7 +212,7 @@ messages:
          if Send(who,@SquaredDistanceTo,#what=oUser) > (iRange * iRange)
             OR Send(who,@GetOwner) <> Send(oUser,@GetOwner)
          {
-            Send(self,@LeaveSong,#who=oUser,#iVolume=iVolume);
+            Send(self,@LeaveSong,#who=oUser,#iVolume=iVolume,#singer=who);
             lEnchanted = DelListElem(lEnchanted,oUser);
          }
       }
@@ -224,7 +237,7 @@ messages:
                if viAffectsOthers
                   OR (NOT viAffectsOthers AND oUser=who)
                {
-                  send(self,@EnterSong,#who=oUser,#iVolume=iVolume);
+                  send(self,@EnterSong,#who=oUser,#iVolume=iVolume,#singer=who);
                   lEnchanted = cons(oUser,lEnchanted);
                }
             }
@@ -330,11 +343,13 @@ messages:
       return;
    }
 
+   % Replace this to modify volume by spellpower calculations - currently on 0 to 99 scale
    CalculateVolume(who=$, iSpellPower=25)
    {
       return iSpellPower;
    }
-   
+
+   % Replace this to modify range by spellpower calculations
    CalculateRange(who=$, iSpellPower=25)
    {
       local iRange;
@@ -351,17 +366,121 @@ messages:
       return FALSE;
    }
 
-   %%% Attack modifier stuff.
+   %%% Modifier functions.
+   %%% All songs do their effect. Use bounds to avoid song-stacking problems.
 
-   ModifyHitRoll(who = $,what = $,hit_roll = $)
+   ModifyHitRoll(who = $,what = $,state = $,hit_roll = $,stroke_obj = $,originalValue = 0)
    {
       return hit_roll;
    }
 
-   ModifyDamage(who = $,what = $,damage = $)
+   ModifyDamage(who = $,what = $,state = $,damage = $,stroke_obj = $,originalValue = 0)
+   {
+      return damage;
+   }
+
+   ModifyDefense(who = $,what = $,state = $,defense = $,stroke_obj = $,originalValue = 0)
+   {
+      return defense;
+   }
+
+   ModifyDefenseDamage(who = $,what = $,state = $,damage = $,atype = $,aspell = $,stroke_obj = $,originalValue = 0)
    {
       return damage;
    }
    
+   % Add or replace elements in a weapon attack
+   ModifyAttackType(who = $,what = $,state = $,attack_type = $)
+   {
+      return attack_type;
+   }
+
+   % Power of outgoing spell attacks
+   ModifySpellPower(who=$,what=$,state=$,iSpellPower=0)
+   {
+      return iSpellPower;
+   }
+
+   % Damage of outgoing spell attacks
+   ModifySpellDamage(who = $,what = $,state=$,iSpellPower=0,damage=$,originalValue=$)
+   {
+      return damage;
+   }
+   
+   % Element type of outgoing spell attacks
+   ModifySpellType(who = $,what = $,state=$,iSpellPower=0,spell_type=$,originalValue=$)
+   {
+      return spell_type;
+   }
+      
+   % The absolute flag causes an attack spell to ignore resists and vulnerabilities
+   ModifySpellAbsolute(who = $,what = $,state=$,iSpellPower=0,absolute=$,originalValue=$)
+   {
+      return absolute;
+   }
+   
+   ModifyVigorTime(state = $,time = 1000)
+   {
+      return time;
+   }
+      
+   ModifyHealthTime(state = $,time = 1000)
+   {
+      return time;
+   }
+
+   ModifyManaTime(state = $,time = 1000)
+   {
+      return time;
+   }
+   
+   % Usual post-attack delay is 1
+   ModifyAttackTime(state=$,time=1,originalValue=1)
+   {
+      return time;
+   }
+   
+   % Replace this to modify postcast times
+   ModifyPostCastTime(state=$,time=1,originalValue=1)
+   {
+      return time;
+   }
+   
+   % Modifies focus times. Passed percent may be 51% - 149% already based on initial spellpower
+   ModifyTranceTime(who=$,state=$,percent=100,iSpellPower=0,originalValue=100)
+   {
+      return percent;
+   }
+   
+   % This is a Spellbane type effect
+   TryPreventSpell(who=$,state=$,iSpellPower=0)
+   {
+      % False = spell not blocked
+      return FALSE;
+   }
+   
+   % This is a Winds type effect
+   TryPreventAttack(who=$,state=$,iSpellPower=0)
+   {
+      % False = attack not blocked
+      return FALSE;
+   }
+
+   % Use in EnterSong to add resists to a player
+   % Must also remove same resists in LeaveSong
+   AddResistances(who=$,state=$,value=$)
+   {
+      Send(who,@AddResistance,#what=-ATCK_SPELL_ALL,#value=value);
+
+      return;
+   }
+
+   RemoveResistances(who=$,state=$,value=$)
+   {
+      Send(who,@RemoveResistance,#what=-ATCK_SPELL_ALL,#value=value);
+
+      return;
+   }
+
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
