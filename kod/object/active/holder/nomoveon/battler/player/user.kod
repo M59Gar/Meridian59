@@ -670,7 +670,7 @@ messages:
          if Send(self,@CheckPlayerFlag,#flag=PFLAG_MURDERER)
             OR Send(self,@CheckPlayerFlag,#flag=PFLAG_OUTLAW)
          {
-            iPenaltyTime = Send(SYS,@GetMurdererOutlawLogoffPenaltyGhostTime);
+            iPenaltyTime = Send(Send(SYS,@GetSettings),@GetMurdererOutlawLogoffPenaltyGhostTime);
          }
          else
          {
