@@ -92,6 +92,10 @@ properties:
    
    % Time in seconds that ghosts will last before taking a penalty
    piLogoffPenaltyGhostTime = 600
+   
+   % Time in seconds that murderer & outlaw ghosts will last before taking a penalty
+   % Should typically be very short, these are advanced players with full initiative
+   piMurdererOutlawLogoffPenaltyGhostTime = 60
 
    %
    % Guild hall settings
@@ -332,6 +336,12 @@ messages:
    {
       return piLogoffPenaltyGhostTime;
    }
+   
+   GetMurdererOutlawLogoffPenaltyGhostTime()
+   {
+      return piMurdererOutlawLogoffPenaltyGhostTime;
+   }
+
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
