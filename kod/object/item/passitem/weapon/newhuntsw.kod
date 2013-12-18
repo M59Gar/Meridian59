@@ -44,6 +44,9 @@ resources:
       "As you try to drop the sword, you feel it tug painfully on the roots that have "
       "snaked their way inside your body.  This is not likely to be a productive exercise."
 
+   NewHunterSword_cant_eat = "You bite into %s%s, but become overwhelmed with nausea. The roots trailing throughout your "
+                             "body hunger for a different kind of sustenance."
+
    NewHunterSword_hunger_assuaged = "Your sword drinks in %s%s's impure blood.  You can feel it course along its roots "
       "into your body, filling you with energy."
 
@@ -125,6 +128,18 @@ messages:
       Send(what,@AddMight,#points=-piMightBonus);
       Send(what,@AddAim,#points=-piAimBonus);
       Send(what,@MsgSendUser,#message_rsc=NewHunterSword_lose_sword);
+      propagate;
+   }
+   
+   ReqUseSomething(what = $)
+   {
+      if IsClass(what, &Food)
+         AND NOT IsClass(what, &Spideye)
+      {
+         send( poOwner, @MsgSendUser, #message_rsc = NewHunterSword_cant_eat,
+               #parm1=send(what,@GetDef),#parm2=send(what,@GetName) );
+         return FALSE;
+      }
       propagate;
    }
 
