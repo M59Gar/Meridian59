@@ -326,7 +326,7 @@ resources:
    player_too_full = "You are too full to eat."
    player_too_full_drink = "You are too full to drink."
 
-   player_to_hunters = "You detect that %s%s could be found somewhere around %s"
+   player_to_hunters = "You detect that %s%s can be found somewhere around %s."
 
    player_dead_male_icona_rsc = playerXa.bgf
    player_dead_male_iconb_rsc = playerXb.bgf
@@ -953,6 +953,12 @@ properties:
    % Used to construct a string for their description.
    plDonationYears = $
 
+   % The string name of the player you are hunting
+   psHuntingName = $
+   
+   % List of string names of players hunting you
+   plHuntedBy = $
+
 messages:
 
    Constructor()
@@ -1480,7 +1486,7 @@ messages:
       
       Send(self,@BreakTrance,#event=EVENT_NEWOWNER);
      
-      if (piFlags2 & PFLAG2_HUNTED)
+      if plHuntedBy <> $
       {
          Send(self,@InformHunters);
       }
@@ -1493,39 +1499,37 @@ messages:
 
    InformHunters()
    {
-      local i, j, oSpell, state, oSpellCloak, rLocation, lRoomlist, oRoom;
+      local i, oHunter, rLocation;
 
-      oSpell = Send(SYS,@FindSpellByNum,#Num=SID_HUNT);
-      oSpellCloak = Send(SYS,@FindSpellByNum,#Num=SID_CLOAK);
-      rLocation = Send(poOwner,@GetName);
-
-      if Send(self,@IsEnchanted,#what=oSpellCloak)
-         AND (Random(1,100) < Send(self,@GetEnchantedState,#what=oSpellCloak))
+      % If we're not a murderer, don't inform.
+      if NOT Send(self,@CheckPlayerFlag,#flag=PFLAG_MURDERER)
       {
-         % Will mislead hunters with random room if Cloak is on and passes state check.
-         oRoom = Send(oSpellCloak,@GetWrongRoom);
-         rLocation = Send(oRoom,@GetName);
+         return;
       }
       
-      for i in plEnchantments
+      rLocation = Send(poOwner,@GetName);
+
+      for i in plHuntedBy
       {
-         if Nth(i,2) = oSpell
+         oHunter = Send(SYS,@FindUserByString,#string=i);
+         
+         if oHunter = $
          {
-            state = Nth(i,3);
-            if not IsClass(first(state),&Prism)
+            Post(self,@RemoveHuntedByString,#string=i);
+         }
+         else
+         {
+            if Send(oHunter,@IsLoggedOn)
             {
-               for j in state
-               {
-                  Send(j,@MsgSendUser,#message_rsc=player_to_hunters,
-                     #parm1=Send(self,@GetDef),
-                     #parm2=Send(self,@GetTrueName),
-                     #parm3=rLocation);
-               }
+               Send(oHunter,@MsgSendUser,#message_rsc=player_to_hunters,
+                        #parm1=Send(self,@GetDef),
+                        #parm2=Send(self,@GetTrueName),
+                        #parm3=rLocation);
             }
          }
       }
-      
-      return $;
+
+      return;
    }
 
    ShowDesc()
@@ -12348,6 +12352,85 @@ messages:
    "Meant for use from admin mode only."
    {
       plDonationYears = DelListElem(plDonationYears, year);
+      return;
+   }
+   
+   SetHunting(who=$)
+   {
+      local oPrey;
+
+      oPrey = Send(SYS,@FindUserByString,#string=psHuntingName);
+      
+      if oPrey = $
+      {
+         return;
+      }
+      
+      if psHuntingName <> $
+      {
+         Send(oPrey,@RemoveHuntedBy,#who=self);
+      }
+      
+      psHuntingName = Send(who,@GetTrueName);
+      Send(oPrey,@AddHuntedBy,#who=self);
+
+      return;
+   }
+   
+   AddHuntedBy(who=$)
+   {
+      local sHunterName;
+      
+      if who = $
+      {
+         return;
+      }
+      
+      sHunterName = Send(who,@GetTrueName);
+      
+      if plHuntedBy = $
+         OR FindListElem(plHuntedBy,sHunterName) = 0
+      {
+         plHuntedBy = Cons(sHunterName,plHuntedBy);
+      }
+      
+      return;
+   }
+   
+   RemoveHuntedBy(who=$)
+   {
+      local sHunterName;
+
+      if who = $
+      {
+         return;
+      }
+
+      if plHuntedBy <> $
+      {
+         sHunterName = Send(who,@GetTrueName);
+         if FindListElem(plHuntedBy,sHunterName) <> 0
+         {
+            plHuntedBy = DelListElem(plHuntedBy,sHunterName);
+         }
+      }
+
+      return;
+   }
+   
+   RemoveHuntedByString(string=$)
+   {
+      if string = $
+      {
+         return;
+      }
+      
+      if plHuntedBy <> $
+         AND FindListElem(plHuntedBy,string) <> 0
+      {
+         plHuntedBy = DelListElem(plHuntedBy,string);
+      }
+
       return;
    }
 

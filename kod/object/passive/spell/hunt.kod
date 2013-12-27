@@ -1,0 +1,151 @@
+% Meridian 59, Copyright 1994-2012 Andrew Kirmse and Chris Kirmse.
+% All rights reserved.
+%
+% This software is distributed under a license that is described in
+% the LICENSE file that accompanies it.
+%
+% Meridian is a registered trademark.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Hunt is Spell
+
+constants:
+
+   include blakston.khd
+
+resources:
+
+   Hunt_name_rsc = "hunt"
+   Hunt_icon_rsc = ihunt.bgf
+   Hunt_desc_rsc = \
+      "Allows the caster to focus on a player's trail "
+      "and track him or her.  The hunted player's name "
+      "must be spoken during the initial trance.  When the enchantment "
+      "is completed, the hunters will receive "
+      "periodic notification of the hunted player's whereabouts.  "
+      "Requires all of the claws from one kriipa paw."
+   
+   Hunt_sound = khunt.wav
+
+   hunt_cold_trail = "Your trail for %s%s seems to have gone cold."
+   hunt_no_target = \
+      "You try to find a trail, but since you aren't looking for "
+      "anyone in particular, you find nothing."
+   hunt_target_is_dm = \
+      "~IImmortals leave no trail that can be followed by this spell.  "
+      "Try another target."
+   hunt_is_on = "~BThe hunt is on!"
+
+   hunt_lost_trackers = "You seem to have managed to lose your trackers!"
+   hunt_gain_trackers = "You sense that someone knows where you are..."
+   
+   can_only_hunt_murderers = "You may only track murderers with this spell."
+
+classvars:
+
+   vrName = Hunt_name_rsc
+   vrIcon = Hunt_icon_rsc
+   vrDesc = Hunt_desc_rsc
+
+   vrSucceed_wav = Hunt_sound
+
+   viMana = 50
+
+   viSpell_num = SID_HUNT
+   viSchool = SS_KRAANAN
+   viSpell_level = 5
+
+   viSpellExertion = 50
+   viChance_To_Increase = 50
+
+   % in milliseconds
+   viCast_time = 10000    
+
+properties:                     
+
+   % Spell is harmful to the player it's cast upon.
+   viHarmful = TRUE
+
+messages:      
+
+   Constructed()  
+   {
+      % Allow the spell on Sacred Haven.
+      if NOT Send(SYS,@IsPKAllowed) 
+      {        
+         viHarmful = FALSE;  
+      }  
+        
+      propagate;  
+   }
+
+   ResetReagents()
+   {
+      plReagents = $;
+      plReagents = Cons([&KriipaClaw,4],plReagents);
+
+      return;
+   }
+
+   CastSpell(who = $, lTargets = $, iSpellPower = 0)
+   {
+      local i, oTarget;
+      
+      if lTargets = $
+      {
+         Send(who,@MsgSendUser,#message_rsc=hunt_no_target);
+         return;
+      }
+      
+      oTarget = First(lTargets);
+      
+      if NOT Send(oTarget,@CheckPlayerFlag,#flag=PFLAG_MURDERER)
+      {
+         Send(who,@MsgSendUser,#message_rsc=can_only_hunt_murderers);
+         return;
+      }
+
+      Send(who,@SetHunting,#who=oTarget);
+      Send(oTarget,@AddHuntedBy,#who=who);
+      
+      if Send(oTarget,@IsLoggedOn)
+      {
+         Send(oTarget,@MsgSendUser,#message_rsc=hunt_gain_trackers);
+      }
+
+      Send(who,@MsgSendUser,#message_rsc=hunt_is_on);
+      
+      propagate;
+   }
+
+   SomethingSaidDuringTrance(who=$,string=$)
+   {
+      local oPrey, lTargets;
+
+      oPrey = Send(SYS,@FindUserByString,#string=string);
+
+      if IsClass(oPrey,&DM) AND NOT Send(oPrey,@IsHuntable)
+      {
+         Send(who,@MsgSendUser,#message_rsc=hunt_target_is_dm);
+
+         return;
+      }
+
+      lTargets = $;
+
+      if oPrey <> $
+      {
+         % Use EVENT_STEER so we don't print message
+         Send(who,@breaktrance,#event=EVENT_STEER);  
+         lTargets = cons(oPrey,lTargets);
+         Send(self,@CastSpell,#who=who,#lTargets=lTargets,
+              #ispellpower=Send(self,@GetSpellPower,#who=who));
+      }
+
+      return;
+   }
+
+
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
