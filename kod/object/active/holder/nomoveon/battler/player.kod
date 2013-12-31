@@ -12323,7 +12323,7 @@ messages:
 
    IsUndead()
    {
-      return Send(self,@IsUsingA,#class=&NecromancerAmulet);
+      return Send(self,@IsUsingA,#class=&NewNecromancerAmulet);
    }
 
    UpdateTimeValues()
