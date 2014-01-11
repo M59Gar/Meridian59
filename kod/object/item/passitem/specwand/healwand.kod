@@ -80,6 +80,8 @@ messages:
 	   }
       
 	   if IsClass(apply_on, &User)
+          AND NOT Send(what,@IsPhasedOut)
+          AND NOT Send(apply_on,@IsPhasedOut)
       {
 		   return True;
       }

@@ -71,6 +71,13 @@ messages:
 
    ReqNewApply(what = $,apply_on = $)
    {
+      if (IsClass(what,&User)
+         AND Send(what,@IsPhasedOut))
+         OR (IsClass(apply_on,&User)
+             AND Send(apply_on,@IsPhasedOut))
+      {
+         return False;
+      }
 
       if not Send(Send(what,@GetOwner),@ReqSomethingAttack,#what=what,
              #victim=apply_on,#use_weapon=self)

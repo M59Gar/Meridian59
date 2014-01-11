@@ -711,6 +711,13 @@ messages:
          Post(self,@AdminGoToSafety);
       }
       poOwner = $;
+      
+      % Check for phase out
+      if Send(self,@IsPhasedOut)
+      {
+         Send(self,@FreezePhaseTimer);
+         Send(self,@RemoveEnchantment,#what=Send(SYS,@FindSpellByNum,#num=SID_PHASE),#report=FALSE);
+      }
 
       % Have to put here so room enchantments are removed first.
       Send(self,@FreezeAllEnchantments);
@@ -4443,6 +4450,7 @@ messages:
       }
 
       if Send(self,@CheckPlayerFlag,#flag=PFLAG_NO_MAGIC)
+         AND NOT IsClass(oSpell,&Phase)
       {  
          Send(self,@MsgSendUser,#message_rsc=user_no_cast);
          

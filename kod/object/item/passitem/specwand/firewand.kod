@@ -71,6 +71,14 @@ messages:
          return FALSE;
       }
 
+      if (IsClass(what,&User)
+         AND Send(what,@IsPhasedOut))
+         OR (IsClass(apply_on,&User)
+             AND Send(apply_on,@IsPhasedOut))
+      {
+         return False;
+      }
+
       % Target must be in the same room as you.  Possibility, someone else
       %  just killed the monster, or target just logged off and is ahead of
       %  you in the thread.

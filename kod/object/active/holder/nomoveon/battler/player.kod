@@ -713,6 +713,10 @@ resources:
    
    death_rift_stayed_too_long = "Having lingered too long while still alive, you find yourself ejected back into reality!"
 
+   phased_out_cant_use = "You try to use your item, but your phased hands pass right through it."
+   cannot_attack_phased_self_rsc = "You can't attack anyone while phased out."
+   cannot_attack_phased_player_rsc = "Your strike would just go right through someone who is phased out."
+
 classvars:
 
    viHand_space = 2
@@ -976,6 +980,10 @@ properties:
    pbDeath_rift = FALSE
    ptDeathRiftTimer = $
 
+   % Time remaining for new client-supported logoff ghost system
+   ptPhaseTimer = $
+   piRemainingPhaseTime = 15000
+   
 messages:
 
    Constructor()
@@ -2428,6 +2436,7 @@ messages:
    {
       Send(self,@AddSpell,#num=SID_BLINK,#initial=TRUE);
       Send(self,@AddSpell,#num=SID_CONVEYANCE,#initial=TRUE);
+      Send(self,@AddSpell,#num=SID_PHASE,#initial=TRUE);
       
       return;
    }
@@ -2988,6 +2997,11 @@ messages:
 
       for i in plEnchantments
       {
+         % Phase reactivates enchantments while it is still in plEnchantments
+         if IsClass(Nth(i,2),&Phase)
+         {
+            continue;
+         }
          state = $;
          if length(i) > 2
          {
@@ -3075,6 +3089,7 @@ messages:
          if Nth(i,2) = what
          {
             if Send(self,@IsLoggedOn)
+               OR IsClass(what,&Phase)
             {
                % TODO: First(i) isn't always a timer?
                if First(i) <> $
@@ -3451,6 +3466,12 @@ messages:
    TryUseItem(what = $)
    {
       local i,iSpace,iUse_type;
+      
+      if Send(self,@IsPhasedOut)
+      {
+         Send(self,@MsgSendUser,#message_rsc=phased_out_cant_use);
+         return FALSE;
+      }
 
       if Send(self,@CheckPlayerFlag,#flag=PFLAG_MORPHED)
       {
@@ -4065,6 +4086,19 @@ messages:
       % Is it in the same room?
       if poOwner <> Send(what,@GetOwner) 
       {
+         return FALSE;
+      }
+
+      If Send(self,@IsPhasedOut)
+      {
+         Send(self,@MsgSendUser,#message_rsc=cannot_attack_phased_self_rsc);
+         return FALSE;
+      }
+      
+      if (IsClass(what,&User)
+         AND Send(what,@IsPhasedOut))
+      {
+         Send(self,@MsgSendUser,#message_rsc=cannot_attack_phased_player_rsc);
          return FALSE;
       }
 
@@ -12645,6 +12679,55 @@ messages:
       }
       
       return;
+   }
+   
+   IsPhasedOut()
+   {
+      return Send(self,@IsEnchanted,#byClass=&Phase);
+   }
+   
+   StartPhaseTimer()
+   {
+      if ptPhaseTimer = $
+      {
+         ptPhaseTimer = CreateTimer(self,@PhaseTimerEnd,piRemainingPhaseTime);
+      }
+      return;
+   }
+   
+   FreezePhaseTimer()
+   {
+      if ptPhaseTimer <> $
+      {
+         piRemainingPhaseTime = GetTimeRemaining(ptPhaseTimer);
+         DeleteTimer(ptPhaseTimer);
+         ptPhaseTimer = $;
+      }
+      
+      if piRemainingPhaseTime < 0
+      {
+         Send(self,@PhaseTimerEnd);
+      }
+      
+      return;
+   }
+   
+   PhaseTimerEnd()
+   {
+      ptPhaseTimer = $;
+   
+      piRemainingPhaseTime = 15000;
+   
+      return;
+   }
+   
+   GetRemainingPhaseTime()
+   {
+      if ptPhaseTimer <> $
+      {
+         return GetTimeRemaining(ptPhaseTimer);
+      }
+      return piRemainingPhaseTime;
    }
 
 end

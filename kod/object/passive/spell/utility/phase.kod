@@ -1,0 +1,215 @@
+% Meridian 59, Copyright 1994-2012 Andrew Kirmse and Chris Kirmse.
+% All rights reserved.
+%
+% This software is distributed under a license that is described in
+% the LICENSE file that accompanies it.
+%
+% Meridian is a registered trademark.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Phase is UtilitySpell
+
+constants:
+   include blakston.khd
+
+resources:
+
+   Phase_name_rsc = "phase"
+   Phase_icon_rsc = iboonint.bgf
+   Phase_desc_rsc = \
+     "By phasing partially out of existence, one may become "
+     "temporarily immune to danger... but, adventurers be warned: "
+     "staying out of phase too long will result in physical and mental damage, "
+     "as well as potential loss of carried items. Time spent phased out is "
+     "cumulative until you reach a safe place in which to recover."
+
+   Phase_no_danger = "The protective magics here prevent phasing out."
+   
+   Phase_penned = "Your tenuous grip on reality snaps, and you are thrust violently along the magical currents until you find "
+                  "a safe place to re-enter the world!"
+   Phase_penned_others = "%s's grip on reality snaps, hurling %s violently away on magical currents!"
+   Phase_penned_others_item = "The violent currents seemed to have torn %s%s from %s's inventory."
+   
+   Phase_penned_wav_rsc = logoffghost_poof.wav
+   
+   Phase_lost_one_item = "You lost %s skill points, %s spell points, and %s%s."
+   Phase_lost_two_items = "You lost %s skill points, %s spell points, %s%s, and %s%s."
+   
+   Phase_phased_out_high_health = "Like a coward, %s phases out before the battle has even been joined!"
+   Phase_phased_out_medium_health = "Sensing the battle turning unfavorably, %s phases out."
+   Phase_phased_out_low_health = "Moments before death, %s phases out!"
+   Phase_phased_out_one_health = "%s phases out a split second before death!"
+   
+   Phase_caster = "You phase out of existence."
+
+
+classvars:
+
+   vrName = Phase_name_rsc
+   vrIcon = Phase_icon_rsc
+   vrDesc = Phase_desc_rsc
+
+   viCast_time = 0
+
+   viSpell_num = SID_PHASE
+   viSpell_level = 1
+   viSchool = SS_RIIJA
+   viMana = 0
+   viSpellExertion = 0
+   viChance_To_Increase = 5
+
+properties:
+
+messages:
+
+   ResetReagents()
+   {
+      plReagents = $;
+
+      return;
+   }
+
+   GetNumSpellTargets()
+   {
+      return 0;
+   }
+
+   CastSpell(who = $, lTargets = $)
+   {
+      if Send(who,@IsPhasedOut)
+      {
+         Send(who,@FreezePhaseTimer);
+         Send(who,@RemoveEnchantment,#what=self);
+      }
+      else
+      {
+         Send(who,@FreezeAllEnchantments);
+         Post(who,@StartEnchantment,#what=self,#time=Send(who,@GetRemainingPhaseTime),#state=TRUE);
+         Post(who,@StartPhaseTimer);
+         Post(who,@EffectSendUser,#what=self,#effect=EFFECT_PARALYZE_ON);
+         Post(self,@NotifyRoomPhaseOut,#who=who);
+      }
+
+      propagate;
+   }
+   
+   NotifyRoomPhaseOut(who=$)
+   {
+      local oRoom, i, each_obj;
+      if who <> $
+      {
+         oRoom = Send(who,@GetOwner);
+         for i in Send(oRoom,@GetPlActive)
+         {
+            each_obj = Send(oRoom,@HolderExtractObject,#data=i);
+            if IsClass(each_obj,&User)
+            {
+               if each_obj = who
+               {
+                  Send(each_obj,@MsgSendUser,#message_rsc=Phase_caster);
+               }
+               else
+               {
+                  if Send(who,@GetHealth) = 1
+                  {
+                     Send(each_obj,@MsgSendUser,#message_rsc=Phase_phased_out_one_health,#parm1=Send(who,@GetName));
+                     continue;
+                  }
+                  if Send(who,@GetHealth) < Send(who,@GetMaxHealth) / 3
+                  {
+                     Send(each_obj,@MsgSendUser,#message_rsc=Phase_phased_out_low_health,#parm1=Send(who,@GetName));
+                     continue;
+                  }
+                  if Send(who,@GetHealth) = Send(who,@GetMaxHealth)
+                  {
+                     Send(each_obj,@MsgSendUser,#message_rsc=Phase_phased_out_high_health,#parm1=Send(who,@GetName));
+                     continue;
+                  }
+                  Send(each_obj,@MsgSendUser,#message_rsc=Phase_phased_out_medium_health,#parm1=Send(who,@GetName));
+               }
+            }
+         }
+      }
+      return;
+   }
+
+   RestartEnchantmentEffect(who = $, state = $)
+   {
+      Send(who,@EffectSendUser,#what=self,#effect=EFFECT_PARALYZE_ON);
+      
+      return;
+   } 
+   
+   SetSpellPlayerFlag(who = $)
+   {
+      Send(who,@SetPlayerFlag,#flag=PFLAG_NO_MOVE,#value=TRUE);
+      Send(who,@SetPlayerFlag,#flag=PFLAG_NO_FIGHT,#value=TRUE);
+      Send(who,@SetPlayerFlag,#flag=PFLAG_NO_MAGIC,#value=TRUE);
+      
+      Send(who,@SetPlayerDrawFX,#drawfx=DRAWFX_DITHERINVIS);
+      
+      return;
+   }
+   
+   EndEnchantment(who = $,report = TRUE,state=$)
+   {
+      % Don't override Hold
+      If NOT Send(who,@IsEnchanted,#byClass=&Hold)
+         AND NOT Send(who,@IsEnchanted,#byClass=&DMHold)
+      {
+         Send(who,@EffectSendUser,#what=self,#effect=EFFECT_PARALYZE_OFF);
+      }
+      Send(who,@ReactivateAllEnchantments);
+      
+      if Send(who,@GetRemainingPhaseTime) < 2
+      {
+         Send(self,@NotifyRoomPenalty,#who=who);
+         Send(who,@AdminGoToSafety);
+      }
+
+      return;
+   }
+
+   NotifyRoomPenalty(who=$)
+   {
+      local oRoom, i, each_obj;
+      if who <> $
+      {
+         oRoom = Send(who,@GetOwner);
+         for i in Send(oRoom,@GetPlActive)
+         {
+            each_obj = Send(oRoom,@HolderExtractObject,#data=i);
+            if IsClass(each_obj,&User)
+            {
+               if each_obj = who
+               {
+                  Send(each_obj,@MsgSendUser,#message_rsc=Phase_penned);
+               }
+               else
+               {
+                  Send(each_obj,@MsgSendUser,#message_rsc=Phase_penned_others,#parm1=Send(who,@GetName),#parm2=Send(who,@GetHimHer));
+               }
+            }
+         }
+
+         if Send(who,@GetOwner) <> $ 
+         {
+            Send(Send(who,@GetOwner),@SomethingWaveRoom,#what=who,#wave_rsc=Phase_penned_wav_rsc);
+         }
+      }
+      return;
+   }
+
+   SuccessChance()
+   {
+      return TRUE;
+   }
+
+   CanBeRemovedByPlayer()
+   {
+      return FALSE;
+   }
+ 
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
