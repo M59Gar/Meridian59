@@ -62,7 +62,7 @@ properties:
 
    piClaimTroopGenTime = 8000
    piClaimTroopCap = 15
-   piNonclaimTroopGenTime = 300000
+   piNonclaimTroopGenTime = 30000
    piNonclaimTroopCap = 4
 
    % Number of minutes to wait before a flag claim is done.
