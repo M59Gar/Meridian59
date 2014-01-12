@@ -115,7 +115,7 @@ messages:
 
    CastSpell(who = $, lTargets = $, iSpellPower = 0, bItemCast = FALSE)
    {
-      local iDamage, iManaFocus, oRoom, oTarget, i, iFrozBonus;
+      local iDamage, oRoom, oTarget, i, iFrozBonus, pbIgnoreResists;
 
       oTarget = First(lTargets);
 
@@ -153,12 +153,19 @@ messages:
 
       % Reduce damage based on spell power.
       iDamage = (iDamage * (50 + (iSpellPower / 2))) / SPELLPOWER_MAXIMUM;
+      
+      pbIgnoreResists = pbAbsolute;
+      if Send(who,@CheckPlayerFlag,#flag=PFLAG_MANA_FOCUS)
+      {
+         % Mana Focus will cut through resists.
+         pbIgnoreResists = TRUE;
+      }
 
       % After figuring damage, do an AssessDamage.  This will handle the necessary
       %  attack messages.
       iDamage = Send(oTarget,@AssessDamage,#what=who,#damage=iDamage,
                      #atype=viAttack_type,#aspell=Send(self,@GetAttackSpell),
-                     #bonus=iFrozBonus,#absolute=pbAbsolute);
+                     #bonus=iFrozBonus,#absolute=pbIgnoreResists);
 
       Send(who,@AssessHit,#what=oTarget,#damage=iDamage,#use_weapon=self);
 
