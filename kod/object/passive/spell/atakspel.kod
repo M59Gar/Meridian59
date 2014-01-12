@@ -125,16 +125,30 @@ messages:
 
       iDamage = Random(piDamageMin, piDamageMax);
       
-      % Froz damage is bonus damage, which is added after resists and vulnerabilities.
-      % It will not get increased by vulnerabilities, but nor is it reduced by resists.
-      % This should allow some consistency against resistant targets.
+      pbIgnoreResists = pbAbsolute;
       iFrozBonus = 0;
-      for i in send(who,@GetPlayerUsing)
+      
+      % A mage may use mana focus to cut through resists, or he may use Jewels of Froz
+      % to boost damage, but he cannot do both.
+      
+      if Send(who,@CheckPlayerFlag,#flag=PFLAG_MANA_FOCUS)
+         AND Send(self,@GetSchool) = SS_FAREN
       {
-         if IsClass(i,&JewelofFroz)
-            OR IsClass(i,&PrincessShield)
+         % Mana Focus will cut through resists.
+         pbIgnoreResists = TRUE;
+      }
+      else
+      {
+         % Froz damage is bonus damage, which is added after resists and vulnerabilities.
+         % It will not get increased by vulnerabilities, but nor is it reduced by resists.
+         % This should allow some consistency against resistant targets.
+         for i in send(who,@GetPlayerUsing)
          {
-            iFrozBonus = Send(i,@ModifyAttackSpellDamage,#who=who,#what=oTarget,#bonus_damage=iFrozBonus,#stroke_obj=self);
+            if IsClass(i,&JewelofFroz)
+               OR IsClass(i,&PrincessShield)
+            {
+               iFrozBonus = Send(i,@ModifyAttackSpellDamage,#who=who,#what=oTarget,#bonus_damage=iFrozBonus,#stroke_obj=self);
+            }
          }
       }
 
@@ -153,13 +167,6 @@ messages:
 
       % Reduce damage based on spell power.
       iDamage = (iDamage * (50 + (iSpellPower / 2))) / SPELLPOWER_MAXIMUM;
-      
-      pbIgnoreResists = pbAbsolute;
-      if Send(who,@CheckPlayerFlag,#flag=PFLAG_MANA_FOCUS)
-      {
-         % Mana Focus will cut through resists.
-         pbIgnoreResists = TRUE;
-      }
 
       % After figuring damage, do an AssessDamage.  This will handle the necessary
       %  attack messages.
