@@ -291,6 +291,8 @@ resources:
    user_safety_on_wav_rsc = safety_on.wav
    user_safety_off_wav_rsc = safety_off.wav
 
+   phased_out_cant_drop = "You can't drop items while phased out of existence."
+
 classvars:
 
    viIndefinite = ARTICLE_NONE
@@ -3472,6 +3474,12 @@ messages:
          Send(self,@MsgSendUser,#message_rsc=user_err_drop);
 
          return;
+      }
+      
+      If Send(self,@IsPhasedOut)
+      {
+         Send(self,@MsgSendUser,#message_rsc=phased_out_cant_drop);
+         return FALSE;
       }
 
       if IsClass(what,&NumberItem)
@@ -7161,6 +7169,12 @@ messages:
          AND IsClass(oIllusion,&Monster)
       {
          iFlags = (iFlags & ~USER_YES & ~OFFER_YES);
+      }
+      
+      if Send(self,@IsPhasedOut)
+      {
+         iFlags = iFlags | LOOK_NO;
+         iFlags = (iFlags & ~MOVEON_NO & ~BATTLER_YES & ~OFFER_YES & ~USER_YES);
       }
 
       return iFlags;

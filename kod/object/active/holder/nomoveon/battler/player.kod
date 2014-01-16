@@ -716,7 +716,9 @@ resources:
    phased_out_cant_use = "You try to use your item, but your phased hands pass right through it."
    cannot_attack_phased_self_rsc = "You can't attack anyone while phased out."
    cannot_attack_phased_player_rsc = "Your strike would just go right through someone who is phased out."
-
+   phase_fatigue_cleared = "This area of peace lifts your phase fatigue."
+   phased_player_description = "This is the ghosted body of %q, whose consciousness has travelled to "
+                               "another plane of existence."
 classvars:
 
    viHand_space = 2
@@ -1491,6 +1493,8 @@ messages:
 
    NewOwner(what = $)
    {
+      local iBasePhaseTime;
+
       Send(self,@ResetGainFlags);
       
       % Are we moving somewhere "safe" or in a frenzy??
@@ -1517,6 +1521,16 @@ messages:
       if (piFlags2 & PFLAG2_HUNTED)
       {
          Send(self,@InformHunters);
+      }
+      
+      If Send(poOwner,@CheckRoomFlag,#flag=ROOM_NO_COMBAT)
+      {
+         iBasePhaseTime = Send(self,@GetBasePhaseTime);
+         if piRemainingPhaseTime <> iBasePhaseTime
+         {
+            Send(self,@MsgSendUser,#message_rsc=phase_fatigue_cleared);
+            piRemainingPhaseTime = iBasePhaseTime;
+         }
       }
 
       return;
@@ -1561,7 +1575,7 @@ messages:
 
    ShowDesc()
    {
-      local i,oEnchanter, rank, HitPoint_Percent;
+      local i,HitPoint_Percent;
 
       if Send(self,@CheckPlayerFlag,#flag=PFLAG_MORPHED)
          AND poIllusion_set <> $
@@ -2584,7 +2598,8 @@ messages:
          iDropCol = Send(targetGhost,@GetCol);
       }
 
-      if Send(oItem,@ReqNewOwner,#what=oDropRoom)
+      if oItem <> $
+         AND Send(oItem,@ReqNewOwner,#what=oDropRoom)
          AND Send(oDropRoom,@ReqNewHold,#what=oItem,#new_row=iDropRow,#new_col=iDropCol)
       {
          if Send(oDropRoom,@ReqSomethingMoved,#what=oItem,#new_row=iDropRow,#new_col=iDropCol)
@@ -2626,6 +2641,12 @@ messages:
       {
          lInv = plPassive;
          index = index - length(plActive);
+      }
+      
+      % In case inventory is completely empty
+      if lInv = $
+      {
+         return;
       }
 
       return Nth(lInv,index);
@@ -3755,6 +3776,18 @@ messages:
          return TRUE;
       }
 
+      If Send(self,@IsPhasedOut)
+      {
+         Send(self,@MsgSendUser,#message_rsc=cannot_attack_phased_self_rsc);
+         return FALSE;
+      }
+      
+      if IsClass(victim,&Player)
+         AND Send(victim,@IsPhasedOut)
+      {
+         return FALSE;
+      }
+
       if IsClass(victim,&Monster)
       {
          if IsClass(victim,&Reflection)
@@ -4086,19 +4119,6 @@ messages:
       % Is it in the same room?
       if poOwner <> Send(what,@GetOwner) 
       {
-         return FALSE;
-      }
-
-      If Send(self,@IsPhasedOut)
-      {
-         Send(self,@MsgSendUser,#message_rsc=cannot_attack_phased_self_rsc);
-         return FALSE;
-      }
-      
-      if (IsClass(what,&User)
-         AND Send(what,@IsPhasedOut))
-      {
-         Send(self,@MsgSendUser,#message_rsc=cannot_attack_phased_player_rsc);
          return FALSE;
       }
 
@@ -5856,6 +5876,11 @@ messages:
    "decay = TRUE if you lose a HP over time because you are boosted over max "
    "by some sort of vamp effect.  If this is true, you shouldn't break a trance."
    {
+      if Send(self,@IsPhasedOut)
+      {
+         return;
+      }
+
       if piFlags & PFLAG_TRANCE AND NOT decay
       {
          Send(self,@BreakTrance,#event=EVENT_DAMAGE);
@@ -5871,6 +5896,11 @@ messages:
    GainHealth(amount = $)
    "Some attempt here to quell the vamp touch bugs"
    {
+      if Send(self,@IsPhasedOut)
+      {
+         return;
+      }
+
       if (2*piMax_health) < (piHealth+amount)
       {
          Send(self,@MsgSendUser,#message_rsc=player_health_gain_maxed);
@@ -5890,6 +5920,11 @@ messages:
    "Don't add beyond piMax_health"
    {
       local oldhealth;
+
+      if Send(self,@IsPhasedOut)
+      {
+         return 0;
+      }
 
       oldhealth = piHealth;
       
@@ -6279,6 +6314,11 @@ messages:
    {
       local iManaLost;
 
+      if Send(self,@IsPhasedOut)
+      {
+         return 0;
+      }
+
       piMana = piMana - amount;
       if piMana < 0
       {
@@ -6293,7 +6333,12 @@ messages:
    GainMana(amount=0, bCapped=FALSE)
    {
       local iManaGained;
-   
+
+      if Send(self,@IsPhasedOut)
+      {
+         return 0;
+      }
+
       iManaGained = amount;
       piMana = piMana + amount;
 
@@ -12704,20 +12749,27 @@ messages:
          ptPhaseTimer = $;
       }
       
-      if piRemainingPhaseTime < 0
-      {
-         Send(self,@PhaseTimerEnd);
-      }
-      
       return;
    }
    
    PhaseTimerEnd()
    {
+      local oPhase;
+
       ptPhaseTimer = $;
-   
-      piRemainingPhaseTime = 15000;
-   
+      
+      oPhase = Send(SYS,@FindSpellByNum,#num=SID_PHASE);
+      Send(self,@RemoveEnchantment,#what=oPhase);
+      Send(oPhase,@NotifyRoomPenalty,#who=self);
+      Send(oPhase,@InflictFlatPenalties,#who=self);
+      
+      Post(self,@AdminGoToLastSafeRoom);
+
+      if piRemainingPhaseTime <> Send(self,@GetBasePhaseTime)
+      {
+         piRemainingPhaseTime = Send(self,@GetBasePhaseTime);
+      }
+
       return;
    }
    
@@ -12728,6 +12780,17 @@ messages:
          return GetTimeRemaining(ptPhaseTimer);
       }
       return piRemainingPhaseTime;
+   }
+   
+   GetBasePhaseTime()
+   {
+      if Send(self,@CheckPlayerFlag,#flag=PFLAG_MURDERER)
+         OR Send(self,@CheckPlayerFlag,#flag=PFLAG_OUTLAW)
+      {
+         return 180000;
+      }
+
+      return Send(Send(SYS,@GetSettings),@GetLogoffPenaltyGhostTime);
    }
 
 end
