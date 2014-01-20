@@ -12784,10 +12784,10 @@ messages:
       if Send(self,@CheckPlayerFlag,#flag=PFLAG_MURDERER)
          OR Send(self,@CheckPlayerFlag,#flag=PFLAG_OUTLAW)
       {
-         return (60000 * 3);
+         return Send(Send(SYS,@GetSettings),@GetOutlawMurdererLogoffPenaltyGhostTime);
       }
 
-      return (60000 * 8);
+      return Send(Send(SYS,@GetSettings),@GetLogoffPenaltyGhostTime);
    }
    
    RefreshPhaseTimeToBase()
