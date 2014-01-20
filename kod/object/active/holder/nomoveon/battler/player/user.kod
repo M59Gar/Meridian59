@@ -325,8 +325,6 @@ properties:
    piLastLoginTime = 0
    % counts total time logged in
    piTimeLoggedIn = 0
-   % What time do we hit the player with unsafe logoff penalties?
-   piLogoffPenaltyTime = 0
 
    psURL = $
 
@@ -660,28 +658,13 @@ messages:
                   AND Send(poOwner,@GetGuildOwner) <> $
                   AND Send(poOwner,@CanEnter,#who=self)
                   AND NOT Send(poOwner,@InFoyer,#who=self))
-      {
-         theTime = GetTime();
-         iPenaltyTime = Send(SYS,@GetLogoffPenaltyGhostTime);
-
-         % If we've already passed our penalty time OR we have been on for
-         %  1/5 the penalty time, then set the logoff penalty time to 90-110%
-         %  of the logoff penalty time.
-         if piLogoffPenaltyTime < theTime
-            OR (theTime - piLastLoginTime) > (iPenaltyTime / 5)
-         {
-            piLogoffPenaltyTime = ((iPenaltyTime * Random(90,110)) / 100);
-            piLogoffPenaltyTime = piLogoffPenaltyTime + theTime;
-                                             
-         }
-         
-         Create(&LogoffGhost,#GhostedPlayer=self,
-                #iPenaltyTime=(piLogoffPenaltyTime-theTime));
+      {  
+         Create(&LogoffGhost,#GhostedPlayer=self,#iPenaltyTime=Send(self,@GetRemainingPhaseTime));
       }
       else
       {
          % Reset our logoff penalty time since we're logging safely.
-         piLogoffPenaltyTime = 0;
+         Send(self,@RefreshPhaseTimeToBase);
          
          % If enabled and and a player logs off in a safe zone he will lose half his mana and all buffs
          if Send(Send(SYS, @GetSettings), @LogSafePenaltyEnable)
@@ -781,7 +764,7 @@ messages:
 
    ResetLogoffPenaltyTime()
    {
-      piLogoffPenaltyTime = 0;
+      Send(self,@RefreshPhaseTimeToBase);
       
       return;
    }
@@ -7518,7 +7501,7 @@ messages:
       piLastMoveUpdateTime = GetTime();
 
       % Eliminate logoff penalty time.  Just easier this way.
-      piLogoffPenaltyTime = 0;
+      Send(self,@RefreshPhaseTimeToBase);
       
       propagate;
    }

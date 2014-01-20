@@ -12736,7 +12736,6 @@ messages:
       if ptPhaseTimer = $
       {
          ptPhaseTimer = CreateTimer(self,@PhaseTimerEnd,piRemainingPhaseTime);
-         Send(self,@EffectSendUserXlat,#xlat=54);
       }
       return;
    }
@@ -12748,7 +12747,6 @@ messages:
          piRemainingPhaseTime = GetTimeRemaining(ptPhaseTimer);
          DeleteTimer(ptPhaseTimer);
          ptPhaseTimer = $;
-         Send(self,@EffectSendUserXlat,#xlat=0);
       }
       
       return;
@@ -12764,14 +12762,10 @@ messages:
       Send(self,@RemoveEnchantment,#what=oPhase);
       Send(oPhase,@NotifyRoomPenalty,#who=self);
       Send(oPhase,@InflictFlatPenalties,#who=self);
-      Send(self,@EffectSendUserXlat,#xlat=0);
       
       Post(self,@AdminGoToLastSafeRoom);
 
-      if piRemainingPhaseTime <> Send(self,@GetBasePhaseTime)
-      {
-         piRemainingPhaseTime = Send(self,@GetBasePhaseTime);
-      }
+      Send(self,@RefreshPhaseTimeToBase);
 
       return;
    }
@@ -12790,10 +12784,26 @@ messages:
       if Send(self,@CheckPlayerFlag,#flag=PFLAG_MURDERER)
          OR Send(self,@CheckPlayerFlag,#flag=PFLAG_OUTLAW)
       {
-         return 180000;
+         return (60000 * 3);
       }
 
-      return Send(Send(SYS,@GetSettings),@GetLogoffPenaltyGhostTime);
+      return (60000 * 8);
+   }
+   
+   RefreshPhaseTimeToBase()
+   {
+      if piRemainingPhaseTime <> Send(self,@GetBasePhaseTime)
+      {
+         piRemainingPhaseTime = Send(self,@GetBasePhaseTime);
+      }
+      return;
+   }
+
+   SetPhaseTimeEqualTo(amount=60000)
+   "Used by logoff ghosts to sync up penalty times."
+   {
+      piRemainingPhaseTime = amount;
+      return;
    }
 
 end

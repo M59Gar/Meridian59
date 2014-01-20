@@ -12,6 +12,8 @@ Phase is UtilitySpell
 
 constants:
    include blakston.khd
+   
+   PHASE_OUT_XLAT = 54
 
 resources:
 
@@ -90,6 +92,7 @@ messages:
       }
       else
       {
+         Send(who,@EffectSendUserXlat,#xlat=PHASE_OUT_XLAT);
          Send(who,@BreakTrance,#event=EVENT_STEER);
          Send(who,@FreezeAllEnchantments);
          Post(who,@StartEnchantment,#what=self);
@@ -186,6 +189,7 @@ messages:
    
    EndEnchantment(who = $,report = TRUE,state=$)
    {
+      Send(who,@EffectSendUserXlat,#xlat=0);
       Send(who,@FreezePhaseTimer);
 
       % Don't override Hold
@@ -216,7 +220,7 @@ messages:
                }
                else
                {
-                  Send(each_obj,@MsgSendUser,#message_rsc=Phase_penned_others,#parm1=Send(who,@GetName),#parm2=Send(who,@GetHimHer));
+                  Send(each_obj,@MsgSendUser,#message_rsc=Phase_penned_others,#parm1=Send(who,@GetName),#parm2=Send(who,@GetHeShe));
                }
             }
          }
