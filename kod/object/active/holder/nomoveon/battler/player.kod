@@ -1529,7 +1529,7 @@ messages:
          if piRemainingPhaseTime <> iBasePhaseTime
          {
             Send(self,@MsgSendUser,#message_rsc=phase_fatigue_cleared);
-            piRemainingPhaseTime = iBasePhaseTime;
+            Send(self,@RefreshPhaseTimeToBase);
          }
       }
 
