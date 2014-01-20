@@ -12736,6 +12736,7 @@ messages:
       if ptPhaseTimer = $
       {
          ptPhaseTimer = CreateTimer(self,@PhaseTimerEnd,piRemainingPhaseTime);
+         Send(self,@EffectSendUserXlat,#xlat=54);
       }
       return;
    }
@@ -12747,6 +12748,7 @@ messages:
          piRemainingPhaseTime = GetTimeRemaining(ptPhaseTimer);
          DeleteTimer(ptPhaseTimer);
          ptPhaseTimer = $;
+         Send(self,@EffectSendUserXlat,#xlat=0);
       }
       
       return;
@@ -12762,6 +12764,7 @@ messages:
       Send(self,@RemoveEnchantment,#what=oPhase);
       Send(oPhase,@NotifyRoomPenalty,#who=self);
       Send(oPhase,@InflictFlatPenalties,#who=self);
+      Send(self,@EffectSendUserXlat,#xlat=0);
       
       Post(self,@AdminGoToLastSafeRoom);
 
