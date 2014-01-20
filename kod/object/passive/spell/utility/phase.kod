@@ -50,6 +50,8 @@ resources:
 
    penalties_inflicted_one_item = "The torturous experience has cost you one item, %d spell points, and %d skill points."
    penalties_inflicted_plural = "The torturous experience has cost you %d items, %d spell points, and %d skill points."
+   
+   no_phasing_in_safe_place_msg = "This place of safety is anchored and calm, and you cannot phase out here."
 
 classvars:
 
@@ -81,6 +83,19 @@ messages:
    GetNumSpellTargets()
    {
       return 0;
+   }
+   
+   CanPayCosts(who = $)
+   {
+      if who <> $
+         AND Send(who,@GetOwner) <> $
+         AND Send(Send(who,@GetOwner),@CheckRoomFlag,#flag=ROOM_NO_COMBAT)
+      {
+         Send(who,@MsgSendUser,#message_rsc=no_phasing_in_safe_place_msg);
+         return FALSE;
+      }
+
+      return TRUE;
    }
 
    CastSpell(who = $, lTargets = $)
