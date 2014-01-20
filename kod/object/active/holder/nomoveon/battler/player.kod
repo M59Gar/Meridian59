@@ -984,7 +984,7 @@ properties:
 
    % Time remaining for new client-supported logoff ghost system
    ptPhaseTimer = $
-   piRemainingPhaseTime = 15000
+   piRemainingPhaseTime = 60000 * 8
    
 messages:
 
