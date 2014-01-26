@@ -4744,7 +4744,9 @@ messages:
       % 50 hp throwaways will do 1/3rd damage.
       % 75 hp will do half.
       % 100 hp will do 2/3rds.
+      % No more damage cuts after 120 hp.
       If IsClass(what,&Player)
+         AND Send(what,@GetBaseMaxHealth) < 120
          AND (Send(what,@CheckPlayerFlag,#flag=PFLAG_OUTLAW)
                OR Send(what,@CheckPlayerFlag,#flag=PFLAG_MURDERER))
          AND NOT (Send(self,@CheckPlayerFlag,#flag=PFLAG_OUTLAW)
