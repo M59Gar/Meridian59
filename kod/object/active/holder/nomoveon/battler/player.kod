@@ -4740,6 +4740,19 @@ messages:
          color_rsc = player_hit_color_blue;
       }
 
+      % Scale down damage done to innocents by throwaway murderers.
+      % 50 hp throwaways will do 1/3rd damage.
+      % 75 hp will do half.
+      % 100 hp will do 2/3rds.
+      If IsClass(what,&Player)
+         AND (Send(what,@CheckPlayerFlag,#flag=PFLAG_OUTLAW)
+               OR Send(what,@CheckPlayerFlag,#flag=PFLAG_MURDERER))
+         AND NOT (Send(self,@CheckPlayerFlag,#flag=PFLAG_OUTLAW)
+                   OR Send(self,@CheckPlayerFlag,#flag=PFLAG_MURDERER))
+      {
+         damage = (damage * Bound(Send(what,@GetBaseMaxHealth),0,150)) / 150;
+      }
+
       if NOT absolute
       {
          % Armor of Gort has a special effect that must go first
