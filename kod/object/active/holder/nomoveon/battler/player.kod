@@ -1546,7 +1546,8 @@ messages:
                }
             }
             
-            if iMurdererCount >= 3
+            if iMurdererCount > Send(Send(SYS,@GetSettings),@GetMaxPKGroupSize)
+               AND Send(Send(SYS,@GetSettings),@GetMaxPKGroupSize) <> 0
             {
                for i in Send(poOwner,@GetHolderActive)
                {
