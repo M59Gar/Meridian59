@@ -296,6 +296,10 @@ resources:
 
    autoloot_on_msg = "You decide to pick up treasure as it drops."
    autoloot_off_msg = "You stop picking up treasure as it drops."
+   
+   days_remaining_in_jail_rsc = "With a sigh, you check the marks in your cell... and see that you still have %d days remaining on your sentence."
+   one_day_remaining_in_jail_rsc = "Only one day left until you get out of jail! You promise yourself that this time, it's all going to be different. This time, you're going to change!"
+   released_from_jail_rsc = "Although the Crown still deems you scum, room must be made for more important prisoners. You have been released from jail."
 
 classvars:
 
@@ -357,6 +361,8 @@ properties:
    piCheaterLogs = 0
 
    pbAutoloot = TRUE
+   
+   ptJailReleaseTimer = $
 
 messages:
 
@@ -385,6 +391,12 @@ messages:
    {
       Send(SYS,@SystemUserDelete,#what=self);
 
+      if ptJailReleaseTimer <> $
+      {
+         DeleteTimer(ptJailReleaseTimer);
+         ptJailReleaseTimer = $;
+      }
+      
       propagate;
    }
 
@@ -6007,6 +6019,29 @@ messages:
       }
       
       poOwner = what;
+      
+      if old = $
+         AND poOwner = Send(SYS,@FindRoomByNum,#num=RID_BAR_JAIL)
+         AND ptJailReleaseTimer <> $
+      {
+         if Send(self,@GetKillsCountedForJailTime) = 1
+         {
+            Post(self,@MsgSendUser,#message_rsc=one_day_remaining_in_jail_rsc,#parm1=Send(self,@GetKillsCountedForJailTime));
+         }
+         else
+         {
+            Post(self,@MsgSendUser,#message_rsc=days_remaining_in_jail_rsc,#parm1=Send(self,@GetKillsCountedForJailTime));
+         }
+      }
+      
+      if poOwner <> $
+         AND poOwner <> Send(SYS,@FindRoomByNum,#num=RID_BAR_JAIL)
+         AND ptJailReleaseTimer <> $
+      {
+         DeleteTimer(ptJailReleaseTimer);
+         ptJailReleaseTimer = $;
+         Send(self,@AdminGoToOOG);
+      }
 
       if poOwner <> $
       {
@@ -7034,14 +7069,68 @@ messages:
 
    AdminGoToJail()
    "Admin supported.  "
-   "Sends the user to the Barloque Jail, if they're logged in"
+   "Sends the user to the Barloque Jail."
    {
-      if pbLogged_on
+      local oJail;
+      
+      oJail = Send(SYS,@FindRoomByNum,#num=RID_BAR_JAIL);
+      
+      If Send(self,@IsLoggedOn)
       {
-         Send(self,@TeleportTo,#RID=RID_BAR_JAIL);
-         Send(self,@MsgSendUser,#message_rsc=user_goto_jail);
-         return Send(SYS,@GetSuccessRsc);
+         Send(oJail,@Teleport,#what=self);
       }
+      else
+      {
+         piSave_room = Send(oJail,@GetRoomNum);
+         piSave_row = Send(oJail,@GetTeleportRow);
+         piSave_col = Send(oJail,@GetTeleportCol);
+         piSave_fine_row = 0;
+         piSave_fine_col = 0;
+      }
+      
+      % 24 hours in jail per innocent kill
+      % CheckForJailRelease will decrement by 1 each day
+      If Send(self,@GetKillsCountedForJailTime) > 0
+      {
+         ptJailReleaseTimer = CreateTimer(self,@CheckForJailRelease,Send(self,@GetKillsCountedForJailTime)* 1000 * 60 * 60 * 24);
+      }
+      
+      return;
+   }
+   
+   CheckForJailRelease()
+   {
+      ptJailReleaseTimer = $;
+      
+      Send(self,@SetKillsCountedForJailTime,#num=Send(self,@GetKillsCountedForJailTime)-1);
+      
+      If Send(self,@GetKillsCountedForJailTime) <= 0
+      {
+         Send(self,@SetKillsCountedForJailTime,#num=0);
+         Send(self,@ReleaseFromJail);
+      }
+      else
+      {
+         ptJailReleaseTimer = CreateTimer(self,@CheckForJailRelease,Send(self,@GetKillsCountedForJailTime)* 1000 * 60 * 60 * 24);
+      }
+      
+      return;
+   }
+   
+   ReleaseFromJail()
+   {
+      if ptJailReleaseTimer <> $
+      {
+         DeleteTimer(ptJailReleaseTimer);
+         ptJailReleaseTimer = $;
+      }
+      
+      If Send(self,@IsLoggedOn)
+      {
+         Send(self,@MsgSendUser,#message_rsc=released_from_jail_rsc);
+      }
+      
+      Send(self,@AdminGoToLastSafeRoom);
       
       return;
    }
