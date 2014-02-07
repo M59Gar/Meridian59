@@ -7112,8 +7112,174 @@ messages:
       else
       {
          ptJailReleaseTimer = CreateTimer(self,@CheckForJailRelease,Send(self,@GetKillsCountedForJailTime)* 1000 * 60 * 60 * 24);
+         Send(self,@JailAtrophy);
       }
       
+      return;
+   }
+   
+   JailAtrophy()
+   {
+      local i, bLooped, LossCounter, BaseLossAmount, iHealth,
+            LossAmount, iLoops,
+            iStart, lSpells, iSpellAbility, iAbilityNum, numSpellPointsLost,
+            lSkills, iSkillAbility, numSkillPointsLost;
+
+      numSpellPointsLost = 0;
+      numSkillPointsLost = 0;
+
+      % Lose spell ability
+      lSpells = Send(poGhostedPlayer,@GetSpellList);
+      if lSpells <> $
+      {
+         LossCounter = 2;
+
+         if Send(poGhostedPlayer,@CheckPlayerFlag,#flag=PFLAG_MURDERER)
+         {
+            BaseLossAmount = -2;
+         }
+         else
+         {
+            BaseLossAmount = -1;
+         }
+
+         % Loop through once to reduce LossCounter below Length(lSpells), and
+         %  keep iterations down for large penalties
+         if (LossCounter > Length(lSpells))
+         {
+            i = 0;
+            % iLoops = number of complete loops we're collapsing to one
+            iLoops = LossCounter / Length(lSpells);
+            while i < Length(lSpells)
+            {
+               i = i + 1;
+               iSpellAbility = Send(poGhostedPlayer,@DecodeSpellAbility,
+                                    #compound=Nth(lSpells,i));
+               LossAmount = Bound(BaseLossAmount*iLoops,$,-(iSpellAbility-5));
+               iAbilityNum = Send(poGhostedPlayer,@DecodeSpellNum,
+                                  #compound=Nth(lSpells,i));
+               Send(poGhostedPlayer,@ChangeSpellAbility,
+                    #spell_num=iAbilityNum,#amount=LossAmount);
+               numSpellPointsLost = (numSpellPointsLost - LossAmount);
+            }
+         }
+
+         iLoops = 0;
+         LossCounter = LossCounter - (numSpellPointsLost/BaseLossAmount);
+         while (LossCounter > 0) and (iLoops < 200)
+         {
+            iLoops = iLoops + 1;
+            % This tells us if we've looped back to one yet.
+            bLooped = FALSE;
+            % Try to lower a Random spell.
+            i = Random(1,Length(lSpells));
+
+            iStart = i;
+            % If the Random lower fails, scan through and lower the first one
+            %  we can.
+            while (i <> iStart OR NOT bLooped)
+                  AND (Send(poGhostedPlayer,@DecodeSpellAbility,
+                            #compound=Nth(lSpells,i)) < 6)
+            {
+               i = i + 1;
+               if i > Length(lSpells) AND NOT bLooped
+               {
+                  % We get one free reset (since we started in the middle
+                  %  somewhere)
+                  i = 1;
+                  bLooped = TRUE;
+               }
+            }
+
+            % If we got all the way through the spell list without lowering
+            %  anything, bail.
+            if i = iStart AND bLooped
+            {
+               LossCounter = 0;
+
+               break;
+            }
+
+            iAbilityNum = Send(poGhostedPlayer,@DecodeSpellNum,
+                               #compound=Nth(lSpells,i));
+            Send(poGhostedPlayer,@ChangeSpellAbility,
+                 #spell_num=iAbilityNum,#amount=BaseLossAmount);
+            numSpellPointsLost = numSpellPointsLost - BaseLossAmount;
+            LossCounter = LossCounter - 1;
+         }
+      }
+
+      % Lose skill ability.
+      lSkills = Send(poGhostedPlayer,@GetSkillList);
+      if (lSkills <> $)
+      {
+         LossCounter = 2;
+
+         % Loop through once to reduce LossCounter below Length(lSkills),
+         %  and keep iterations down for large penalties
+         if LossCounter > Length(lSkills)
+         {
+            i = 0;
+            % Number of complete loops we're collapsing to one.
+            iLoops = LossCounter/Length(lSkills);
+            while i < Length(lSkills)
+            {
+               i = i + 1;
+               iSkillAbility = Send(poGhostedPlayer,@DecodeSkillAbility,
+                                    #compound=Nth(lSkills,i));
+               LossAmount = bound((BaseLossAmount*iLoops),$,-(iSkillAbility-5));
+               iAbilityNum = Send(poGhostedPlayer,@DecodeSkillNum,
+                                  #compound=Nth(lSkills,i));
+               Send(poGhostedPlayer,@ChangeSkillAbility,
+                    #skill_num=iAbilityNum,#amount=LossAmount);
+               numSkillPointsLost = numSkillPointsLost - LossAmount;
+            }
+         }
+
+         iLoops = 0;
+         LossCounter = LossCounter - (numSkillPointsLost/BaseLossAmount);
+         while LossCounter > 0 AND iLoops < 100
+         {
+            iLoops = iLoops + 1;
+            % This tells us if we've looped back to one yet.
+            bLooped = FALSE;
+            % Try to lower a Random skill.
+            i = Random(1,Length(lSkills));
+            iStart = i;
+
+            % If the random lower fails, scan through and lower the first one
+            %  we can.
+            while (i <> iStart OR NOT bLooped)
+                  AND (Send(poGhostedPlayer,@DecodeSkillAbility,
+                            #compound=Nth(lSkills,i)) < 6)
+            {
+               i = i + 1;
+               if i > Length(lSkills) AND NOT bLooped
+               {
+                  % We get one free reset since we started in the middle
+                  %  somewhere
+                  i = 1;
+                  bLooped = TRUE;
+               }
+            }
+            % If we got all the way through the skill list without lowering
+            %  anything, bail.
+            if i = iStart AND bLooped
+            {
+               LossCounter = 0;
+
+               break;
+            }
+
+            iAbilityNum = Send(poGhostedPlayer,@DecodeSkillNum,
+                               #compound=Nth(lSkills,i));
+            Send(poGhostedPlayer,@ChangeSkillAbility,
+                 #skill_num=iAbilityNum,#amount=BaseLossAmount);
+            numSkillPointsLost = numSkillPointsLost - BaseLossAmount;
+            LossCounter = LossCounter - 1;
+         }
+      }
+
       return;
    }
    
