@@ -7106,7 +7106,7 @@ messages:
       
       If Send(self,@GetKillsCountedForJailTime) <= 0
       {
-         Send(self,@SetKillsCountedForJailTime,#num=0);
+         Send(self,@SetKillsCountedForJailTime,#num=1);
          Send(self,@ReleaseFromJail);
       }
       else

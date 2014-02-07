@@ -994,7 +994,7 @@ properties:
    ptLeaveBuilderGroupTimer = $
 
    % PKs will accrue jail time for each innocent they kill
-   piKillsCountedForJailTime = 0
+   piKillsCountedForJailTime = 1
 
 messages:
 
