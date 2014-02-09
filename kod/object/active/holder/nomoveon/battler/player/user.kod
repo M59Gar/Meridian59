@@ -7071,7 +7071,7 @@ messages:
    "Admin supported.  "
    "Sends the user to the Barloque Jail."
    {
-      local oJail;
+      local oJail, iHoursPerKill;
       
       oJail = Send(SYS,@FindRoomByNum,#num=RID_BAR_JAIL);
       
@@ -7087,12 +7087,11 @@ messages:
          piSave_fine_row = 0;
          piSave_fine_col = 0;
       }
-      
-      % 24 hours in jail per innocent kill
-      % CheckForJailRelease will decrement by 1 each day
+
       If Send(self,@GetKillsCountedForJailTime) > 0
       {
-         ptJailReleaseTimer = CreateTimer(self,@CheckForJailRelease,Send(self,@GetKillsCountedForJailTime)* 1000 * 60 * 60 * 24);
+         iHoursPerKill = Send(Send(SYS,@GetSettings),@GetHoursPerKillsCountedForJail);
+         ptJailReleaseTimer = CreateTimer(self,@CheckForJailRelease,Send(self,@GetKillsCountedForJailTime)* 1000 * 60 * 60 * iHoursPerKill);
       }
       
       return;
@@ -7100,6 +7099,8 @@ messages:
    
    CheckForJailRelease()
    {
+      local iHoursPerKill;
+
       ptJailReleaseTimer = $;
       
       Send(self,@SetKillsCountedForJailTime,#num=Send(self,@GetKillsCountedForJailTime)-1);
@@ -7111,8 +7112,13 @@ messages:
       }
       else
       {
-         ptJailReleaseTimer = CreateTimer(self,@CheckForJailRelease,Send(self,@GetKillsCountedForJailTime)* 1000 * 60 * 60 * 24);
-         Send(self,@JailAtrophy);
+         iHoursPerKill = Send(Send(SYS,@GetSettings),@GetHoursPerKillsCountedForJail);
+         ptJailReleaseTimer = CreateTimer(self,@CheckForJailRelease,Send(self,@GetKillsCountedForJailTime)* 1000 * 60 * 60 * iHoursPerKill);
+         
+         if Send(Send(SYS,@GetSettings),@GetJailAtrophy)
+         {
+            Send(self,@JailAtrophy);
+         }
       }
       
       return;
