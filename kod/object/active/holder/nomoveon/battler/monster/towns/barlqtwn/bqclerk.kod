@@ -84,7 +84,9 @@ resources:
    barloque_clerk_was = "was"
    barloque_clerk_were = "were"
    
+   indulgence_amount = "An indulgence will cost you %d shillings."
    indulgence_not_enough_money = "You think the law will forgive you for partial measures? Pay the full amount or get out of my sight."
+   indulgence_too_much_money = "I will accept no extra amounts. Bribery is not legal here."
    indulgence_success = "Thank you for paying your debt to society. You will no longer be considered a murderer in the eyes of the law."
    indulgence_not_a_murderer = "Only murderers may buy indulgences."
    barloque_clerk_indulgence_1 = "Let it be known that "
@@ -178,6 +180,14 @@ messages:
        
 	     return true;      
       }
+      
+      if amount > Send(Send(SYS,@GetSettings),@GetPardonIndulgenceCost)
+      {
+         Post(poOwner,@SomeoneSaid,#what=self,#string=indulgence_too_much_money,
+	                  #type=SAY_RESOURCE);
+         return true;      
+      }
+      
       send(oMoney,@SubtractNumber,#number=amount);
       send(self,@PerformIndulgencePardonMurderer,#who=who);
       post(poOwner,@SomeoneSaid,#what=self,#string=indulgence_success,#type=SAY_RESOURCE);
@@ -231,6 +241,15 @@ messages:
       % Public Commands
       if isClass(what,&User)
       {
+         if StringContain(string,"indulgence")
+            OR StringContain(string,"amount")
+            OR StringContain(string,"how much")
+            OR StringContain(string,"how many")
+            OR StringContain(string,"cost")
+         {
+            Send(what,@MsgSendUser,#message_rsc=indulgence_amount,#parm1=Send(Send(SYS,@GetSettings),@GetPardonIndulgenceCost));
+         }
+         
          oTarget = Send(SYS,@FindUserByString,#string=string);      
          if oTarget <> $
          {
