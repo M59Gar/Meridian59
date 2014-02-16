@@ -38,9 +38,10 @@ messages:
       
       oCaramo = send(SYS,@GetCaramo);
 
-      if (what = oCaramo) or (what = send(oCaramo,@GetJusticar) or IsClass(what,&DM))
+      if what = oCaramo
+         OR IsClass(what,&DM)
       {	 
-   	   return NEWS_PERMISSION_READ_WRITE;
+         return NEWS_PERMISSION_READ_WRITE;
       }
 
       return NEWS_PERMISSION_READ;
