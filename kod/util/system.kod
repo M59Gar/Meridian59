@@ -296,7 +296,9 @@ properties:
    poTerritoryGame = $
    poNodeAttack = $
    poRentableRoomMaintenance = $
-   
+   poRareRegistry = $
+   poAutomaticAuctions = $
+
    % Singleton object that keeps track of various game statistics
    poStatistics = $
    
@@ -439,6 +441,8 @@ messages:
       Send(self,@RecreateQuestEngine);
       Send(self,@RecreateNodeAttack);
       Send(self,@RecreateRentableRoomMaintenance);
+      Send(self,@RecreateRareRegistry);
+      Send(self,@RecreateAutomaticAuctions);
 
       Send(self,@RecreateAllSpells,#figure_totals=FALSE);
       Send(self,@RecreateAllSkills,#figure_totals=FALSE);
@@ -542,6 +546,8 @@ messages:
       Send(self,@RecreateParliament);
       Send(self,@RecreateNodeAttack);
       Send(self,@RecreateRentableRoomMaintenance);
+      Send(self,@RecreateRareRegistry);
+      Send(self,@RecreateAutomaticAuctions);
       Send(self,@RecreateWarEvent);
 	  Send(self,@CreateAllSpellsIfNew);
 	  Send(self,@CreateAllRoomsIfNew);
@@ -1188,6 +1194,7 @@ messages:
       Send(poParliament,@NewDay);
       Send(poNodeAttack,@NewDay);
       Send(poRentableRoomMaintenance,@NewDay);
+      Send(poAutomaticAuctions,@NewDay);
       Send(&SoldierShield,@NewDay);
 
       Send(Send(self,@FindSpellByNum,#num=SID_NODEBURST),@NewDay);
@@ -4501,6 +4508,16 @@ messages:
    {
       return poRentableRoomMaintenance;
    }
+   
+   GetRareRegistry()
+   {
+      return poRareRegistry;
+   }
+   
+   GetAutomaticAuctions()
+   {
+      return poAutomaticAuctions;
+   }
 
    RecreateTerritoryGame()
    {
@@ -4560,6 +4577,34 @@ messages:
       }
 
       return TRUE;
+   }
+   
+   RecreateRareRegistry()
+   {
+      if poRareRegistry <> $
+      {
+         Send(poRareRegistry,@Recreate);
+      }
+      else
+      {
+         poRareRegistry = Create(&RareRegistry);
+      }
+
+      return TRUE;
+   }
+   
+   RecreateAutomaticAuctions()
+   {
+      if poAutomaticAuctions <> $
+      {
+         Send(poAutomaticAuctions,@Recreate);
+      }
+      else
+      {
+         poAutomaticAuctions = Create(&AutomaticAuctions);
+      }
+
+      return TRUE:
    }
 
    ChangeRentDue(amount=-20000)

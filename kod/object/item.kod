@@ -712,6 +712,7 @@ messages:
    Delete()
    {
       Send(self,@ClearAllItemAttributes);
+      Send(Send(SYS,@GetRareRegistry),@UnregisterRareItem,#what=self);
       
       propagate;
    }

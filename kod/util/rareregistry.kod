@@ -1,0 +1,175 @@
+% Meridian 59, Copyright 1994-2012 Andrew Kirmse and Chris Kirmse.
+% All rights reserved.
+%
+% This software is distributed under a license that is described in
+% the LICENSE file that accompanies it.
+%
+% Meridian is a registered trademark.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+RareRegistry is UtilityFunctions
+
+constants:
+   
+   include blakston.khd
+
+resources:
+
+properties:
+
+   % The server's list of all non-standard items (such as from auctions or tournaments)
+   plRareItems = $
+
+messages: 
+
+   Constructor()
+   {
+      Send(self,@Recreate);
+      return;
+   }
+
+   Recreate()
+   {      
+      return;
+   }
+   
+   RegisterRareItem(what = $)
+   {
+      if what = $
+         OR NOT IsClass(what,&Item)
+      {
+         return;
+      }
+
+      if plRareItems = $
+         OR FindListElem(plRareItems,what) = 0
+      {
+         plRareItems = Cons(what,plRareItems);
+      }
+
+      return;
+   }
+   
+   UnregisterRareItem(what = $)
+   {
+      if what = $
+      {
+         return;
+      }
+      
+      if plRareItems <> $
+         AND FindListElem(plRareItems,what) <> 0
+      {
+         plRareItems = DelListElem(plRareItems,what);
+      }
+      return;
+   }
+   
+   GetRareItems()
+   {
+      return plRareItems;
+   }
+   
+   FindRareItemsByColor(xlat = 0)
+   {
+      local i, plItemsOfColor;
+      
+      plItemsOfColor = 0;
+      for i in plRareItems
+      {
+         if Send(i,@GetPaletteTranslation) = xlat
+         {
+            plItemsOfColor = Cons(i,plItemsOfColor);
+         }
+      }
+      
+      return plItemsOfColor;
+   }
+   
+   FindRareItemsByAttribute(attribute = 0)
+   {
+      local i, plItemsWithAttribute;
+      
+      plItemsWithAttribute = 0;
+      for i in plRareItems
+      {
+         if Send(i,@HasAttribute,#ItemAtt=attribute)
+         {
+            plItemsWithAttribute = Cons(i,plItemsWithAttribute);
+         }
+      }
+      
+      return plItemsWithAttribute;
+   }
+
+   FindRareItemsByColorAndAttribute(xlat = 0, attribute = 0)
+   {
+      local i, plItemsWithAttributeAndColor;
+      
+      plItemsWithAttributeAndColor = 0;
+      for i in plRareItems
+      {
+         if Send(i,@HasAttribute,#ItemAtt=attribute)
+            AND Send(i,@GetPaletteTranslation) = xlat
+         {
+            plItemsWithAttributeAndColor = Cons(i,plItemsWithAttributeAndColor);
+         }
+      }
+      
+      return plItemsWithAttributeAndColor;
+   }
+   
+   FindRareItemsWithDamageBonus(bonus = 0)
+   {
+      local i, plItemsWithDamageBonus;
+      
+      plItemsWithDamageBonus = 0;
+      for i in plRareItems
+      {
+         if IsClass(i,&Weapon)
+            AND Send(i,@GetDamageBonus) >= bonus
+         {
+            plItemsWithDamageBonus = Cons(i,plItemsWithDamageBonus);
+         }
+      }
+      
+      return plItemsWithDamageBonus;
+   }
+   
+   FindRareItemsWithHitBonus(bonus = 0)
+   {
+      local i, plItemsWithHitBonus;
+      
+      plItemsWithHitBonus = 0;
+      for i in plRareItems
+      {
+         if IsClass(i,&Weapon)
+            AND Send(i,@GetHitBonus) >= bonus
+         {
+            plItemsWithHitBonus = Cons(i,plItemsWithHitBonus);
+         }
+      }
+      
+      return plItemsWithHitBonus;
+   }
+   
+   FindRareItemsWithSpellType(type = 0)
+   {
+      local i, plItemsWithSpell;
+      
+      plItemsWithSpell = 0;
+      for i in plRareItems
+      {
+         if IsClass(i,&Weapon)
+            AND Send(i,@GetAttackSpell) = type
+         {
+            plItemsWithSpell = Cons(i,plItemsWithSpell);
+         }
+      }
+      
+      return plItemsWithSpell;
+   }
+   
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -937,6 +937,16 @@ messages:
    {
       return TRUE;
    }
+   
+   GetDamageBonus()
+   {
+      return piDamageBonus;
+   }
+   
+   GetHitBonus()
+   {
+      return piHitBonus;
+   }
 
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

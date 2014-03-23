@@ -1,0 +1,129 @@
+% Meridian 59, Copyright 1994-2012 Andrew Kirmse and Chris Kirmse.
+% All rights reserved.
+%
+% This software is distributed under a license that is described in
+% the LICENSE file that accompanies it.
+%
+% Meridian is a registered trademark.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+AutomaticAuctions is UtilityFunctions
+
+constants:
+   
+   include blakston.khd
+
+   % This is the minimum number of Meridian days between auctions. Roughly 3 months.
+   DAYS_MIN = 1080
+
+resources:
+
+   auction_warning_hour = "The Royal Auction will begin in one hour."
+   auction_warning_half_hour = "The Royal Auction will begin in thirty minutes."
+   auction_warning_ten_minutes = "The Royal Auction will begin in ten minutes."
+   auction_warning_five_minutes = "The Royal Auction will begin in five minutes."
+   auction_warning_one_minute = "The Royal Auction will begin in one minute."
+   auction_begin = "The Royal Auction has begun."
+   
+   % An/a color itemtype - then att mod
+   item_description = "%s %s %s, %s"
+   
+   color_red = "red"
+   color_sky = "sky"
+   
+   att_purge = "engraved with the sign of Psychochild."
+   att_hold = "bearing the sigil of Zjiria."
+   
+   announce_auction = "The next Royal Auction will take place in %d Meridian days."
+
+properties:
+
+   plAdvertisementRecipients = $
+   plParticipants = $
+   plItemsForSale = $
+   piDaysUntilNextAuction = DAYS_MIN
+
+messages: 
+
+   Constructor()
+   {
+      Send(self,@Recreate);
+      return;
+   }
+
+   Recreate()
+   {
+      return;
+   }
+
+   NewDay()
+   {
+      piDaysUntilNextAuction = piDaysUntilNextAuction - 1;
+
+      if (piDaysUntilNextAuction mod 6) = 0
+      {
+         Send(self,@AnnounceUpcomingAuction);
+      }
+     
+      if piDaysUntilNextAuction <= 0
+      {
+         piDaysUntilNextAuction = DAYS_MIN + Random(0,DAYS_MIN);
+         Send(self,@BeginAuction);
+      }
+
+      return;
+   }
+   
+   AnnounceUpcomingAuction()
+   {
+      local i;
+      
+      for i in plAdvertisementRecipients
+      {
+         Send(self,@AdvertiseUpcomingAuction,#who=i);
+      }
+
+      return;
+   }
+   
+   AdvertiseUpcomingAuction(who = $)
+   {
+      if who <> $
+         AND IsClass(who,&User)
+         AND Send(who,@IsLoggedOn)
+      {
+         Send(who,@MsgSendUser,#message_rsc=announce_auction,#parm1=piDaysUntilNextAuction);
+      }
+
+      return;
+   }
+   
+   BeginAuction()
+   {
+      return;
+   }
+   
+   GenerateItemsForSale(num_items=10)
+   {
+      local lItems, oItem, lWeaponTypes, lWeaponXlats, iType, iXlat, iAttribute;
+
+      lItems = 0;
+      lWeaponTypes = [&Hammer,&Mace,&LongSword,&MysticSword,&Axe,&Scimitar,&NeruditeSword,&RiijaSword,&ShortSword];
+      lWeaponXlats = [PT_ITEM_XLAT_BLUE_TO_SKY,PT_ITEM_XLAT_BLUE_TO_RED];
+      iAttribute = [];
+      while num_items > 0
+      {
+         iType = Nth(lWeaponTypes,Random(1,Length(lWeaponTypes)));
+         iXlat = Nth(lWeaponXlats,Random(1,Length(lWeaponXlats)));
+         oItem = Create(iType);
+         Send(oItem,@SetPaletteTranslation,#translation=iXlat);
+      
+         num_items = num_items - 1;
+      }
+      
+      return lItems;
+   }
+   
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
