@@ -197,6 +197,11 @@ messages:
          AppendTempString(vrPoss_Article);
          AppendTempString(Send(self,@GetName));
          AppendTempString(rItem_condition);
+         AppendTempString(" \(");
+         AppendTempString(piHits);
+         AppendTempString("/");
+         AppendTempString(piHits_init);
+         AppendTempString("\)");
       }
       
       % Describe special properties
