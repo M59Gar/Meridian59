@@ -407,6 +407,9 @@ properties:
    % A master list of all spell-casting active objects
    plSpellTotems = $
 
+   % A master list of all object attributes, for maintenance, control, & statistics purposes
+   plObject_attributes_master = $
+   
 messages:
 
    GetName()
@@ -6674,6 +6677,28 @@ messages:
  
        return;
     }
+    
+   AddObjectAttributeToMasterList(attribute=$)
+   {
+      if attribute <> $
+         AND (plObject_attributes_master = $
+         OR FindListElem(plObject_attributes_master, attribute) = 0)
+      {
+         plObject_attributes_master = Cons(attribute,plObject_attributes_master);
+      }
+      return;
+   }
+    
+   RemoveObjectAttributeFromMasterList(attribute=$)
+   {
+      if attribute <> $
+         AND plObject_attributes_master <> $
+         AND FindListElem(plObject_attributes_master, attribute) <> 0
+      {
+         plObject_attributes_master = DelListElem(plObject_attributes_master,attribute);
+      }
+      return;
+   }
  
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -123,7 +123,12 @@ messages:
    ModifyDefenseDamage(who = $,what = $,damage = $,atype = 0,aspell = 0)
    "Increase or decrease damage done to defender."
    {
-      local iDamageReduce;
+      local iDamageReduce, oAttribute;
+      
+      for oAttribute in plObject_attributes
+      {
+         damage = Send(oAttribute,@ModifyDefenseDamage,#who=who,#what=what,#damage=damage,#atype=atype,#aspell=aspell);
+      }
 
       iDamageReduce = 0;
       if piDamage_reduce <> 0
