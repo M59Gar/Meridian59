@@ -385,5 +385,35 @@ messages:
       return damage;
    }
    
+   AttributeDesc()
+   {
+      local target_type;
+      
+      AppendTempString("\n\n");
+      AppendTempString("When defending against a strike, the runes engraved on this "); 
+      AppendTempString(Send(poHostObject,@GetName));
+      AppendTempString(" will cast ");
+      AppendTempString(Send(Send(self,@GetSpell),@GetName));
+      AppendTempString(" ");
+
+      target_type = Send(self,@GetType);
+      if target_type = 1
+      {
+         AppendTempString("on you ");
+      }
+      if target_type = 2
+      {
+         AppendTempString("on the enemy ");
+      }
+
+      AppendTempString("with ");
+      AppendTempString(Send(self,@GetSpellPower));
+      AppendTempString(" spellpower ");
+      AppendTempString(Send(self,@GetProcChance));
+      AppendTempString("\% of the time.");
+      
+      return;
+   }
+   
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

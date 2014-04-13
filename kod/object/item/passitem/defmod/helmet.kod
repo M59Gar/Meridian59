@@ -45,45 +45,6 @@ properties:
 
 
 messages:
-
-   AppendDesc()
-   {
-      local i, target_type;
-
-      if plObject_attributes <> $
-      {
-         for i in plObject_attributes
-         {
-            if IsClass(i,&DefModSpellProc)
-            {
-            AppendTempString("\n\n");
-            AppendTempString("When defending against a strike, the runes engraved on this ");
-            AppendTempString(Send(self,@GetName));
-            AppendTempString(" will cast ");
-            AppendTempString(Send(Send(i,@GetSpell),@GetName));
-            AppendTempString(" ");
-            
-            target_type = Send(i,@GetType);
-            if target_type = 1
-            {
-               AppendTempString("on you ");
-            }
-            if target_type = 2
-            {
-               AppendTempString("on the enemy ");
-            }
-            
-            AppendTempString("with ");
-            AppendTempString(Send(i,@GetSpellPower));
-            AppendTempString(" spellpower ");
-            AppendTempString(Send(i,@GetProcChance));
-            AppendTempString("\% of the time.");
-            }
-         }
-      }
-
-      propagate;
-   }
    
    DoPlayerArt()
    {

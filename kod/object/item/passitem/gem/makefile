@@ -4,7 +4,7 @@
 
 !include $(TOPDIR)\common.mak
 
-DEPEND = ..\defmodobjectatt.bof
-BOFS = defmodspellproc.bof defmodsockets.bof
+DEPEND = ..\gem.bof
+BOFS = gemresist.bof
 
 !include $(KODDIR)\kod.mak
