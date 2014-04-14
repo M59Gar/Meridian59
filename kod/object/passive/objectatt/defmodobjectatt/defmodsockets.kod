@@ -60,6 +60,7 @@ messages:
       local oUsing, oOwner;
       
       if oGem <> $
+         AND Send(oGem,@ReqAttach,#socketed_object=self)
       {
          oOwner = Send(poHostObject,@GetOwner);
          if oOwner <> $
@@ -98,7 +99,8 @@ messages:
                                   #parm2=Send(poHostObject,@GetName));
          }
          
-         Send(Send(oGem,@GetOwner),@LeaveHold,#what=oGem);
+         Send(oGem,@NewOwner,#what=$);
+         Send(oGem,@SetSocketedObject,#socketed_object=self);
          plSocketed = Cons(oGem, plSocketed);
       }
       
@@ -116,6 +118,7 @@ messages:
             for oGem in plSocketed
             {
                Send(who,@NewHold,#what=oGem);
+               Send(oGem,@SetSocketedObject);
                plSocketed = DelListElem(plSocketed,oGem);
             }
             if who <> $
@@ -136,6 +139,22 @@ messages:
          }
       }
 
+      return;
+   }
+   
+   DeleteGemFromSockets(oGem=$)
+   {
+      local i;
+      
+      for i in plSocketed
+      {
+         if oGem = i
+         {
+            Send(i,@SetSocketedObject);
+            plSocketed = DelListElem(plSocketed,i);
+         }
+      }
+      
       return;
    }
    

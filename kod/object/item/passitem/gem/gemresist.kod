@@ -110,13 +110,24 @@ messages:
       return resistance_list;
    }
    
+   AppendDesc()
+   {
+      AppendTempString(" When attached to armor, it will offer ");
+      AppendTempString(piResistStrength);
+      AppendTempString("\% ");
+      AppendTempString(Send(SYS,@GetResistanceName,#type=piResistType));
+      AppendTempString(". ");
+      
+      propagate;
+   }
+   
    AttributeDesc()
    {
       AppendTempString("An attached ");
       AppendTempString(Send(self,@GetName));
       AppendTempString(" adds ");
       AppendTempString(piResistStrength);
-      AppendTempString("% ");
+      AppendTempString("\% ");
       AppendTempString(Send(SYS,@GetResistanceName,#type=piResistType));
       AppendTempString(". ");
       

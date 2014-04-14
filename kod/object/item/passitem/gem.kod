@@ -28,7 +28,25 @@ classvars:
 
 properties:
 
+   poSocketedObject = $
+
 messages:
+   
+   ReqAttach(socketed_object = $)
+   {
+      if poSocketedObject <> $
+      {
+         return false;
+      }
+      
+      return true;
+   }
+   
+   SetSocketedObject(socketed_object = $)
+   {
+      poSocketedObject = socketed_object;
+      return;
+   }
    
    AttributeDesc()
    {
@@ -44,5 +62,14 @@ messages:
       return resistance_list;
    }
 
+   Delete()
+   {
+      if poSocketedObject <> $
+      {
+         Send(poSocketedObject,@DeleteGemFromSockets,#oGem=self);
+      }
+      propagate;
+   }
+   
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
