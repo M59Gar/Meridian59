@@ -19,6 +19,8 @@ resources:
    gem_name_rsc = "mystical gem"
    gem_icon_rsc = emerald.bgf
    gem_desc = "This strange gem seems to gravitate powerfully towards your armor."
+   
+   gem_attach_no_sockets = "The %s has no sockets for attaching a gem!"
 
 classvars:
 
@@ -26,11 +28,26 @@ classvars:
    vrIcon = gem_icon_rsc
    vrDesc = gem_desc
 
+   viUse_type = ITEM_SINGLE_USE
+   viItem_type = ITEMTYPE_GEM
+
+   viObject_flags = APPLY_YES | GETTABLE_YES
+   
 properties:
 
    poSocketedObject = $
 
 messages:
+   
+   ReqNewApply(what = $,apply_on = $)
+   {
+      if Send(self,@ReqAttach)
+      {
+         return TRUE;
+      }
+
+      return FALSE;
+   }
    
    ReqAttach(socketed_object = $)
    {
@@ -40,6 +57,24 @@ messages:
       }
       
       return true;
+   }
+   
+   NewApplied(what = $,apply_on = $)
+   {
+      local oObjectAtt;
+      
+      for oObjectAtt in Send(apply_on,@GetObjectAttributes)
+      {
+         if IsClass(oObjectAtt,&DefModSockets)
+         {
+            Send(oObjectAtt,@AttachGem,#who=what,#oGem=self);
+            return;
+         }
+      }
+      
+      Send(what,@MsgSendUser,#message_rsc=gem_attach_no_sockets,#parm1=Send(apply_on,@GetName));
+      
+      return;
    }
    
    SetSocketedObject(socketed_object = $)

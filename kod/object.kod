@@ -941,6 +941,11 @@ messages:
       }
       return 0;
    }
+   
+   GetObjectAttributes()
+   {
+      return plObject_attributes;
+   }
 
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
