@@ -5,6 +5,6 @@
 !include $(TOPDIR)\common.mak
 
 DEPEND = ..\gem.bof
-BOFS = gemresist.bof
+BOFS = gemresist.bof gemremove.bof
 
 !include $(KODDIR)\kod.mak

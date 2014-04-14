@@ -5051,6 +5051,7 @@ messages:
       plItemTemplates = cons(create(&GemThrustResistance),plItemTemplates);
       plItemTemplates = cons(create(&GemBludgeonResistance),plItemTemplates);
       plItemTemplates = cons(create(&GemPierceResistance),plItemTemplates);
+      plItemTemplates = cons(create(&GemRemove),plItemTemplates);
 
       return;
    }
