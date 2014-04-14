@@ -1705,6 +1705,39 @@ messages:
       }
       return FALSE;
    }
+   
+   GetResistanceModifiers()
+   {
+      return $;
+   }
 
+   GetCurrentResistances()
+   {
+      local lCurrentResistances, oObjectAttribute;
+      
+      lCurrentResistances = Send(self,@GetResistanceModifiers);
+      
+      for oObjectAttribute in plObject_attributes
+      {
+         lCurrentResistances = Send(oObjectAttribute,@ModifyResistance,#resistance_list=lCurrentResistances);
+      }
+      
+      return lCurrentResistances;
+   }
+   
+   ModifyResistance(resistance_list=$)
+   {
+      local oResist, lCurrentResistances;
+      
+      lCurrentResistances = Send(self,@GetCurrentResistances);
+      
+      for oResist in lCurrentResistances
+      {
+         resistance_list = Send(SYS,@AddResistance,#what=Nth(oResist,2),#value=Nth(oResist,1),#resistance_list=resistance_list);
+      }
+      
+      return resistance_list;
+   }
+   
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -39,7 +39,7 @@ messages:
       return;
    }
    
-   ModifyResistances(resistance_list=$)
+   ModifyResistance(resistance_list=$)
    {
       return resistance_list;
    }

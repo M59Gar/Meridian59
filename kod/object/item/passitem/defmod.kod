@@ -72,7 +72,6 @@ messages:
    NewUsed(what = $)
    {
       Send(what,@AddDefenseModifier,#what=self);
-      send(self,@AddResistances);
 
       propagate;
    }
@@ -80,33 +79,8 @@ messages:
    NewUnused(what = $)
    {
       Send(what,@RemoveDefenseModifier,#what=self);
-      send(self,@RemoveResistances);
 
       propagate;
-   }
-
-   AddResistances()
-   {
-      local i;
-      
-      for i in send(self,@GetResistanceModifiers)
-      {
-         Send(poOwner,@AddResistance,#what=nth(i,1),#value=nth(i,2));
-      }
-      
-      return;
-   }
-
-   RemoveResistances()
-   {
-      local i;
-      
-      for i in send(self,@GetResistanceModifiers)
-      {
-         Send(poOwner,@RemoveResistance,#what=nth(i,1),#value=nth(i,2));
-      }
-      
-      return;
    }
 
    GetResistanceModifiers()

@@ -125,6 +125,11 @@ messages:
       return defense_power;
    }
    
+   ModifyResistance(resistance_list=$)
+   {
+      return resistance_list;
+   }
+   
    AppendDesc()
    {
       return;

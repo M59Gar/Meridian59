@@ -87,7 +87,7 @@ messages:
       return piResistStrength;
    }
    
-   ModifyResistances(resistance_list=$)
+   ModifyResistance(resistance_list=$)
    {
       local oResist;
       
