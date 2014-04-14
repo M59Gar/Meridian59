@@ -116,6 +116,7 @@ messages:
       AppendTempString(Send(self,@GetName));
       AppendTempString(" adds ");
       AppendTempString(piResistStrength);
+      AppendTempString("% ");
       AppendTempString(Send(SYS,@GetResistanceName,#type=piResistType));
       AppendTempString(". ");
       

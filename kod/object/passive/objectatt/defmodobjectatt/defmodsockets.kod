@@ -160,8 +160,16 @@ messages:
       AppendTempString("This ");
       AppendTempString(Send(poHostObject,@GetName));
       AppendTempString(" has ");
-      AppendTempString(piSockets);
-      AppendTempString(" sockets. ");
+      Send(SYS,@AppendCardinalToTempString,#number=piSockets);
+      
+      if piSockets = 1
+      {
+         AppendTempString(" socket. ");
+      }
+      else
+      {
+         AppendTempString(" sockets. ");
+      }
       
       for oGem in plSocketed
       {

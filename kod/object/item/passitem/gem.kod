@@ -34,7 +34,7 @@ messages:
    {
       AppendTempString("An attached ");
       AppendTempString(Send(self,@GetName));
-      AppendTempString(" adds a strange mystical effect.");
+      AppendTempString(" adds a strange mystical effect. ");
       
       return;
    }
