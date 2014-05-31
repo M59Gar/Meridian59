@@ -1,0 +1,147 @@
+% Meridian 59, Copyright 1994-2012 Andrew Kirmse and Chris Kirmse.
+% All rights reserved.
+%
+% This software is distributed under a license that is described in
+% the LICENSE file that accompanies it.
+%
+% Meridian is a registered trademark.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Tournament is ActiveObject
+
+constants:
+
+   include blakston.khd
+
+resources:
+
+   register_msg = "Your name has been added to the Royal Tournament rolls."
+   unregister_msg = "Your name has been removed from the Royal Tournament rolls."
+   already_registered_msg = "Your name is already on the Royal Tournament rolls."
+
+   new_combatant_msg = "~B%s has been selected to fight!"
+   
+classvars:
+
+
+properties:
+
+   piStartTime = 0
+
+   % Players who intend to show up to the tournament
+   plSignedUp = $
+   
+   % Players who actually showed up to the tournament (useful for post mortem)
+   plParticipants = $
+   
+   % Players actually competing in current fight
+   plCombatants = $
+   
+   % List of those who haven't lost. Tournament ends when only one remains.
+   plRemainingParticipants = $
+   
+   poChampion = $
+   
+   poArena = $
+
+messages:
+
+   Constructor()
+   {
+      propagate;
+   }
+   
+   BeginTournament()
+   {
+      local oPlayer;
+      
+      for oPlayer in plSignedUp
+      {
+         if Send(oPlayer,@IsLoggedOn)
+         {
+            plParticipants = Cons(oPlayer,plParticipants);
+         }
+         else
+         {
+            Send(self,@TournamentAnnouncement,
+         }
+      }
+   
+      return;
+   }
+   
+   SetUpFight()
+   {
+      local oArena, oWatcher, oRandomCombatant, i, each_obj;
+
+      oArena = Send(SYS,@FindRoomByNum,#num=RID_TOS_ARENA);
+      if oArena = $
+      {
+         return;
+      }
+      
+      oWatcher = Send(oArena,@GetWatcher);
+      if oWatcher = $
+      {
+         return;
+      }
+      
+      oRandomCombatant = Nth(plParticipants,Random(1,Length(plParticipants)));
+      Send(oWatcher,@NewCombatant,#who=oRandomCombatant);
+      
+      plParticipants = DelListElem(plParticipants,oRandomCombatant);
+      
+      oRandomCombatant = Nth(plParticipants,Random(1,Length(plParticipants)));
+      Send(oWatcher,@NewCombatant,#who=oRandomCombatant);
+      
+      return;
+   }
+   
+   TournamentAnnouncement()
+   {
+   
+      return;
+   }
+   
+   RegisterPlayer(who = $)
+   {
+      if IsClass(who,&Player)
+         AND (plSignedUp = $
+              OR FindListElem(plSignedUp,who) = 0)
+      {
+         plSignedUp = Cons(who,plSignedUp);
+         Send(who,@MsgSendUser,#message_rsc=register_msg);
+         return;
+      }
+      
+      if plSignedUp <> $
+         AND FindListElem(plSignedUp,who) <> 0
+      {
+         Send(who,@MsgSendUser,#message_rsc=already_registered_msg);
+      }
+
+      return;
+   }
+   
+   UnRegisterPlayer(who = $)
+   {
+      if IsClass(who,&Player)
+         AND plSignedUp <> $
+      {
+         plSignedUp = DelListElem(plSignedUp,who);
+         Send(who,@MsgSendUser,#message_rsc=unregister_msg);
+      }
+      
+      return;
+   }
+
+   SomeoneSaid(what = $,type = $,string = $,parm1 = $,parm2 = $,parm3 = $,
+              parm4 = $, parm5 = $,parm6 = $,parm7 = $,parm8 = $)                       
+   {
+
+      return;
+   }
+
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
